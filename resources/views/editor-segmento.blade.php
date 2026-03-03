@@ -8,7 +8,7 @@
     
     <textarea 
         name="script_content"
-        hx-post="/segment/{{ $segment->id }}/update" 
+        hx-post="/segment/{{ $segment->id }}/update-script"
         hx-trigger="keyup changed delay:800ms" 
         hx-target="#save-indicator"
         class="w-full h-[60vh] bg-gray-900 text-gray-100 p-4 rounded border border-gray-600 focus:border-blue-500 outline-none resize-none font-mono text-lg"

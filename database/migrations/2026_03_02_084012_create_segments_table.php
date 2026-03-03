@@ -14,10 +14,20 @@ return new class extends Migration
         Schema::create('segments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('rundown_id')->constrained()->onDelete('cascade');
-            $table->integer('order_index'); // Posición en la tabla
-            $table->string('title'); // Título de la noticia o bloque
+            $table->foreignId('block_id')->nullable()->constrained()->onDelete('cascade');
+            $table->integer('order_index')->default(0);
+            $table->string('title')->default('SIN TÍTULO');
             $table->integer('duration_seconds')->default(0);
-            $table->longText('script_content')->nullable(); // El Guion Literario
+            $table->longText('script_content')->nullable();
+            $table->enum('type', [
+                'VIVO',
+                'VTR',
+                'OFF',
+                'CORTE_COMERCIAL',
+                'NOTA_SECA',
+                'PRESENTACION',
+                'CIERRE'
+            ])->default('PRESENTACION');
             $table->timestamps();
         });
     }

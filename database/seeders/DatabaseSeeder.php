@@ -2,37 +2,83 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\Show;
+use App\Models\Rundown;
+use App\Models\Block;
+use App\Models\Segment;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
-    /**
-     * Seed the application's database.
-     */
-        public function run(): void
+    public function run(): void
     {
-        // Creamos un programa de ejemplo
-        $show = \App\Models\Show::create(['title' => 'Zorin News 6PM']);
-
-        // Creamos una escaleta para hoy
-        $rundown = \App\Models\Rundown::create([
-            'show_id' => $show->id,
-            'air_date' => now(),
+        // 1. Crear el programa
+        $show = Show::create([
+            'title' => 'Noticiero Central',
         ]);
 
-        // Creamos 3 segmentos de ejemplo
-        for ($i = 1; $i <= 3; $i++) {
-            \App\Models\Segment::create([
-                'rundown_id' => $rundown->id,
-                'order_index' => $i,
-                'title' => "Noticia Importante #$i",
-                'duration_seconds' => 120,
-                'script_content' => "Este es el guion de la noticia $i. Aquí va lo que lee el presentador.",
+        // 2. Crear el rundown
+        $rundown = Rundown::create([
+            'show_id'  => $show->id,
+            'air_date' => '2026-03-02',
+            'status'   => 'produccion',
+        ]);
+
+        // 3. Bloques con sus segmentos
+        $bloques = [
+            [
+                'title' => 'BLOQUE 1 - APERTURA',
+                'order_index' => 1,
+                'segments' => [
+                    ['title' => 'PRESENTACIÓN CONDUCTORES',  'type' => 'PRESENTACION',    'duration_seconds' => 60],
+                    ['title' => 'TITULARES DEL DÍA',         'type' => 'VIVO',             'duration_seconds' => 90],
+                    ['title' => 'NOTA ESPECIAL ECONOMÍA',    'type' => 'VTR',              'duration_seconds' => 120],
+                ],
+            ],
+            [
+                'title' => 'BLOQUE 2 - NACIONALES',
+                'order_index' => 2,
+                'segments' => [
+                    ['title' => 'REFORMA EDUCATIVA',         'type' => 'VIVO',             'duration_seconds' => 180],
+                    ['title' => 'REPORTE DESDE CONGRESO',    'type' => 'VTR',              'duration_seconds' => 150],
+                    ['title' => 'COMENTARIO EDITORIAL',      'type' => 'OFF',              'duration_seconds' => 60],
+                ],
+            ],
+            [
+                'title' => 'CORTE COMERCIAL',
+                'order_index' => 3,
+                'segments' => [
+                    ['title' => 'PAUTA COMERCIAL 1',         'type' => 'CORTE_COMERCIAL',  'duration_seconds' => 120],
+                ],
+            ],
+            [
+                'title' => 'BLOQUE 3 - CIERRE',
+                'order_index' => 4,
+                'segments' => [
+                    ['title' => 'DEPORTES RESUMEN',          'type' => 'VTR',              'duration_seconds' => 90],
+                    ['title' => 'NOTA SECA CULTURA',         'type' => 'NOTA_SECA',        'duration_seconds' => 45],
+                    ['title' => 'CIERRE Y DESPEDIDA',        'type' => 'CIERRE',           'duration_seconds' => 30],
+                ],
+            ],
+        ];
+
+        foreach ($bloques as $bloqueData) {
+            $block = Block::create([
+                'rundown_id'  => $rundown->id,
+                'title'       => $bloqueData['title'],
+                'order_index' => $bloqueData['order_index'],
             ]);
+
+            foreach ($bloqueData['segments'] as $index => $segData) {
+                Segment::create([
+                    'rundown_id'       => $rundown->id,
+                    'block_id'         => $block->id,
+                    'title'            => $segData['title'],
+                    'type'             => $segData['type'],
+                    'duration_seconds' => $segData['duration_seconds'],
+                    'order_index'      => $index + 1,
+                ]);
+            }
         }
     }
 }

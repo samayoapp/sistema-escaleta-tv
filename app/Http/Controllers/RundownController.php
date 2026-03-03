@@ -2,18 +2,182 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Block;
 use App\Models\Rundown;
+use App\Models\Segment;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class RundownController extends Controller
 {
-    public function index() 
+    // ─── Helper privado ───────────────────────────────────────────────────────
+    private function renderTable($rundownId)
     {
-        // Usamos 'with' para traer los segmentos ya ordenados desde la base de datos
-        $rundown = Rundown::with(['show', 'segments' => function($q) {
-            $q->orderBy('order_index', 'asc');
-        }])->first();
+        $rundown = Rundown::with([
+            'blocks'           => fn($q) => $q->orderBy('order_index'),
+            'blocks.segments'  => fn($q) => $q->orderBy('order_index'),
+        ])->findOrFail($rundownId);
+
+        return response(view('partials.table-body', compact('rundown'))->render())
+            ->withHeaders(['HX-Trigger' => json_encode(['refreshTime' => true])]);
+    }
+
+    // ─── Vista principal ──────────────────────────────────────────────────────
+    public function index()
+    {
+        $rundown = Rundown::with([
+            'show',
+            'blocks'          => fn($q) => $q->orderBy('order_index'),
+            'blocks.segments' => fn($q) => $q->orderBy('order_index'),
+        ])->first();
+
+        if (!$rundown) {
+            return 'No hay Rundown. Corre: ./vendor/bin/sail artisan migrate:fresh --seed';
+        }
 
         return view('rundown', compact('rundown'));
+    }
+
+    // ─── Segmentos ────────────────────────────────────────────────────────────
+
+    public function editSegment($id)
+    {
+        $segment = Segment::findOrFail($id);
+        return view('editor-segmento', compact('segment'));
+    }
+
+    public function updateScript(Request $request, $id)
+    {
+        $segment = Segment::findOrFail($id);
+        $segment->update(['script_content' => $request->script_content]);
+        return '<span class="text-green-400 font-bold">✓ Guardado (' . now()->format('H:i:s') . ')</span>';
+    }
+
+    public function updateField(Request $request, $id)
+    {
+        $segment = Segment::findOrFail($id);
+        $segment->update($request->only(['title', 'duration_seconds', 'type']));
+        return $this->renderTable($segment->rundown_id);
+    }
+
+    public function addSegment(Request $request, $blockId)
+    {
+        $block = Block::findOrFail($blockId);
+
+        Segment::create([
+            'rundown_id'       => $block->rundown_id,
+            'block_id'         => $block->id,
+            'order_index'      => $block->segments()->count() + 1,
+            'title'            => 'NUEVO ÍTEM',
+            'type'             => 'PRESENTACION',
+            'duration_seconds' => 60,
+        ]);
+
+        return $this->renderTable($block->rundown_id);
+    }
+
+    public function deleteSegment($id)
+    {
+        $segment = Segment::findOrFail($id);
+        $rundownId = $segment->rundown_id;
+        $blockId = $segment->block_id;
+
+        $segment->delete();
+
+        if ($blockId) {
+            $block = Block::find($blockId);
+            if ($block) {
+                $block->segments()->orderBy('order_index')
+                    ->get()->each(fn($s, $i) => $s->update(['order_index' => $i + 1]));
+            }
+        }
+
+        return $this->renderTable($rundownId);
+    }
+
+    public function reorder(Request $request, $rundownId)
+    {
+        if ($request->blocks) {
+            foreach ($request->blocks as $blockId => $segmentIds) {
+                foreach ($segmentIds as $index => $segmentId) {
+                    Segment::where('id', $segmentId)->update([
+                        'block_id'    => $blockId,
+                        'order_index' => $index + 1,
+                    ]);
+                }
+            }
+        }
+
+        return $this->renderTable($rundownId);
+    }
+
+    // ─── Bloques ──────────────────────────────────────────────────────────────
+
+    public function addBlock($rundownId)
+    {
+        $rundown = Rundown::findOrFail($rundownId);
+
+        Block::create([
+            'rundown_id'  => $rundownId,
+            'title'       => 'NUEVO BLOQUE',
+            'order_index' => $rundown->blocks()->count() + 1,
+        ]);
+
+        return $this->renderTable($rundownId);
+    }
+
+    public function updateBlock(Request $request, $id)
+    {
+        $block = Block::findOrFail($id);
+        $block->update($request->only('title'));
+        return response()->noContent();
+    }
+
+    public function deleteBlock($id)
+    {
+        $block = Block::findOrFail($id);
+        $rundownId = $block->rundown_id;
+        $block->delete();
+
+        return $this->renderTable($rundownId);
+    }
+
+    // ─── Otros ────────────────────────────────────────────────────────────────
+
+    public function getTime($id)
+    {
+        $rundown = Rundown::with([
+            'blocks.segments'
+        ])->findOrFail($id);
+        return view('partials.total-time', compact('rundown'));
+    }
+
+    public function prompter($id)
+    {
+        $rundown = Rundown::with([
+            'show',
+            'blocks'          => fn($q) => $q->orderBy('order_index'),
+            'blocks.segments' => fn($q) => $q->orderBy('order_index'),
+        ])->findOrFail($id);
+
+        return view('teleprompter', compact('rundown'));
+    }
+
+    // ─── PDF ──────────────────────────────────────────────────────────────────
+
+    public function generatePdf($id)
+    {
+        $rundown = Rundown::with([
+            'show',
+            'blocks'          => fn($q) => $q->orderBy('order_index'),
+            'blocks.segments' => fn($q) => $q->orderBy('order_index'),
+        ])->findOrFail($id);
+
+        $pdf = Pdf::loadView('pdf.guion', compact('rundown'))
+            ->setPaper('letter', 'portrait');
+
+        $filename = 'guion-' . str($rundown->show->title)->slug() . '-' . $rundown->air_date . '.pdf';
+
+        return $pdf->download($filename);
     }
 }

@@ -22,4 +22,9 @@ class Rundown extends Model
     {
         return $this->hasMany(Segment::class)->orderBy('order_index');
     }
+
+    public function blocks()
+    {
+        return $this->hasMany(Block::class);
+    }
 }
