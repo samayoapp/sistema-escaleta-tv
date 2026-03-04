@@ -22,18 +22,14 @@ class RundownController extends Controller
             ->withHeaders(['HX-Trigger' => json_encode(['refreshTime' => true])]);
     }
 
-    // ─── Vista principal ──────────────────────────────────────────────────────
-    public function index()
+    // ─── Vista principal — recibe ID del rundown ──────────────────────────────
+    public function index($id)
     {
         $rundown = Rundown::with([
             'show',
             'blocks'          => fn($q) => $q->orderBy('order_index'),
             'blocks.segments' => fn($q) => $q->orderBy('order_index'),
-        ])->first();
-
-        if (!$rundown) {
-            return 'No hay Rundown. Corre: ./vendor/bin/sail artisan migrate:fresh --seed';
-        }
+        ])->findOrFail($id);
 
         return view('rundown', compact('rundown'));
     }
@@ -146,9 +142,7 @@ class RundownController extends Controller
 
     public function getTime($id)
     {
-        $rundown = Rundown::with([
-            'blocks.segments'
-        ])->findOrFail($id);
+        $rundown = Rundown::with(['blocks.segments'])->findOrFail($id);
         return view('partials.total-time', compact('rundown'));
     }
 
@@ -161,6 +155,15 @@ class RundownController extends Controller
         ])->findOrFail($id);
 
         return view('teleprompter', compact('rundown'));
+    }
+
+    public function updateTime(Request $request, $id)
+    {
+        $rundown = Rundown::findOrFail($id);
+        $rundown->air_time = $request->input('air_time');
+        $rundown->save();
+
+        return $this->renderTable($id);
     }
 
     // ─── PDF ──────────────────────────────────────────────────────────────────
@@ -179,15 +182,6 @@ class RundownController extends Controller
         $filename = 'guion-' . str($rundown->show->title)->slug() . '-' . $rundown->air_date . '.pdf';
 
         return $pdf->download($filename);
-    }
-
-    public function updateTime(Request $request, $id)
-    {
-        $rundown = Rundown::findOrFail($id);
-        $rundown->air_time = $request->input('air_time');
-        $rundown->save();
-
-        return $this->renderTable($id);
     }
 
     public function generatePdfEscaleta($id)

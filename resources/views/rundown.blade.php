@@ -39,7 +39,7 @@
             </a>
             <a href="/rundown/{{ $rundown->id }}/pdf" target="_blank"
                 class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded text-sm font-bold uppercase transition">
-                📄 Descargar Guion PDF
+                📄 Guion PDF
             </a>
             <a href="/rundown/{{ $rundown->id }}/pdf-escaleta" target="_blank"
                 class="bg-purple-700 hover:bg-purple-600 px-4 py-2 rounded text-sm font-bold uppercase transition">

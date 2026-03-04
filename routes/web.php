@@ -30,6 +30,7 @@ Route::post('/shows/{id}/rundowns',                [ShowController::class, 'crea
 Route::post('/rundown/{id}/duplicate',             [ShowController::class, 'duplicateRundown']);
 Route::post('/shows/{id}/archive',                 [ShowController::class, 'archive']);
 Route::delete('/rundown/{id}/delete',              [ShowController::class, 'deleteRundown']);
+Route::delete('/shows/{id}', [ShowController::class, 'destroy']);
 
 // ── Rundown ────────────────────────────────────────────
 Route::get('/rundown/{id}',                        [RundownController::class, 'index']);

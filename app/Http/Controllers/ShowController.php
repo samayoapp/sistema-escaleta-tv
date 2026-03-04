@@ -128,4 +128,10 @@ class ShowController extends Controller
         $rundown->delete();
         return redirect('/shows/' . $showId);
     }
+
+    public function destroy($id)
+    {
+        Show::findOrFail($id)->delete();
+        return redirect('/');
+    }
 }

@@ -82,6 +82,14 @@
                                     📦 Archivar
                                 </button>
                             </form>
+                            <form method="POST" action="/shows/{{ $show->id }}"
+                                onsubmit="return confirm('¿Eliminar este programa y TODAS sus escaletas? No se puede deshacer.')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-xs text-gray-500 hover:text-red-400 transition">
+                                    🗑 Eliminar
+                                </button>
+                            </form>
                         </div>
                     </div>
                 @endforeach
