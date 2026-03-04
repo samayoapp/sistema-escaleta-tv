@@ -180,4 +180,13 @@ class RundownController extends Controller
 
         return $pdf->download($filename);
     }
+
+    public function updateTime(Request $request, $id)
+    {
+        $rundown = Rundown::findOrFail($id);
+        $rundown->air_time = $request->input('air_time');
+        $rundown->save();
+
+        return $this->renderTable($id);
+    }
 }

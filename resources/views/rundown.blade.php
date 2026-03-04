@@ -20,11 +20,15 @@
             <p class="text-gray-400 text-sm">
                 Fecha: {{ $rundown->air_date }} &nbsp;·&nbsp;
                 Inicio:
-                <input
+               <input
                     type="time"
-                    value="{{ $rundown->air_time ?? '19:00:00' }}"
+                    name="air_time"
+                    value="{{ substr($rundown->air_time ?? '19:00:00', 0, 5) }}"
                     hx-post="/rundown/{{ $rundown->id }}/update-time"
-                    hx-trigger="change"
+                    hx-trigger="blur"
+                    hx-target="#tabla-segmentos"
+                    hx-swap="innerHTML"
+                    hx-include="this"
                     class="bg-transparent border-b border-gray-600 text-yellow-400 font-mono text-sm focus:outline-none focus:border-yellow-400 cursor-pointer">
             </p>
         </div>

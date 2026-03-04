@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\RundownController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 
 Route::get('/',                                [RundownController::class, 'index']);
 Route::get('/segment/{id}/edit',               [RundownController::class, 'editSegment']);
@@ -16,7 +17,4 @@ Route::post('/rundown/{id}/reorder',           [RundownController::class, 'reord
 Route::get('/rundown/{id}/get-time',           [RundownController::class, 'getTime']);
 Route::get('/rundown/{id}/prompter',           [RundownController::class, 'prompter']);
 Route::get('/rundown/{id}/pdf',                [RundownController::class, 'generatePdf']);
-Route::post('/rundown/{id}/update-time', function(Request $request, $id) {
-    \App\Models\Rundown::findOrFail($id)->update(['air_time' => $request->air_time]);
-    return response()->noContent();
-});
+Route::post('/rundown/{id}/update-time',       [RundownController::class, 'updateTime']);
