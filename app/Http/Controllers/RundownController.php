@@ -189,4 +189,20 @@ class RundownController extends Controller
 
         return $this->renderTable($id);
     }
+
+    public function generatePdfEscaleta($id)
+    {
+        $rundown = Rundown::with([
+            'show',
+            'blocks'          => fn($q) => $q->orderBy('order_index'),
+            'blocks.segments' => fn($q) => $q->orderBy('order_index'),
+        ])->findOrFail($id);
+
+        $pdf = Pdf::loadView('pdf.escaleta', compact('rundown'))
+            ->setPaper('letter', 'landscape');
+
+        $filename = 'escaleta-' . str($rundown->show->title)->slug() . '-' . $rundown->air_date . '.pdf';
+
+        return $pdf->download($filename);
+    }
 }

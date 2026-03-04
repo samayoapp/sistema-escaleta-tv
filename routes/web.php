@@ -18,3 +18,4 @@ Route::get('/rundown/{id}/get-time',           [RundownController::class, 'getTi
 Route::get('/rundown/{id}/prompter',           [RundownController::class, 'prompter']);
 Route::get('/rundown/{id}/pdf',                [RundownController::class, 'generatePdf']);
 Route::post('/rundown/{id}/update-time',       [RundownController::class, 'updateTime']);
+Route::get('/rundown/{id}/pdf-escaleta', [RundownController::class, 'generatePdfEscaleta']);
