@@ -33,6 +33,10 @@
             </p>
         </div>
         <div class="flex gap-2">
+            <a href="/shows/{{ $rundown->show_id }}" 
+                class="text-gray-500 hover:text-white transition mr-2">
+                    ← Volver
+            </a>
             <a href="/rundown/{{ $rundown->id }}/pdf" target="_blank"
                 class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded text-sm font-bold uppercase transition">
                 📄 Descargar Guion PDF
