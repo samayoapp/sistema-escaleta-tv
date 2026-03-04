@@ -1,5 +1,21 @@
+@php
+    $airTimeParts = explode(':', $rundown->air_time ?? '19:00:00');
+    $acumulado = ((int)$airTimeParts[0] * 3600) + ((int)$airTimeParts[1] * 60) + ((int)($airTimeParts[2] ?? 0));
+
+    function fmtDuration($s) {
+        return sprintf('%02d:%02d', floor($s / 60), $s % 60);
+    }
+    function fmtHora($s) {
+        $s = $s % 86400;
+        return sprintf('%02d:%02d:%02d', floor($s / 3600), floor(($s % 3600) / 60), $s % 60);
+    }
+@endphp
+
 @forelse($rundown->blocks->sortBy('order_index') as $blockIndex => $block)
-@php $blockNum = $blockIndex + 1; @endphp
+@php
+    $blockNum   = $blockIndex + 1;
+    $blockStart = $acumulado;
+@endphp
 
     {{-- CABECERA DEL BLOQUE --}}
     <tr class="bg-blue-900/30 hover:bg-blue-900/40 transition block-header"
@@ -32,10 +48,16 @@
                 class="bg-transparent border-none text-blue-400 font-bold uppercase text-xs focus:ring-0 focus:outline-none w-full tracking-widest cursor-text">
         </td>
 
-        <td class="px-4 py-2 text-right">
+        <td class="px-4 py-2 text-right w-24">
             <span class="text-[10px] text-blue-300 font-mono bg-blue-900/40 px-2 py-1 rounded">
-                {{ floor($block->segments->sum('duration_seconds') / 60) }}m
-                {{ $block->segments->sum('duration_seconds') % 60 }}s
+                {{ fmtDuration($block->segments->sum('duration_seconds')) }}
+            </span>
+        </td>
+
+        {{-- Hora de inicio del bloque --}}
+        <td class="px-4 py-2 text-center w-28">
+            <span class="text-[10px] text-blue-400 font-mono bg-blue-900/20 px-2 py-1 rounded">
+                ▶ {{ fmtHora($blockStart) }}
             </span>
         </td>
 
@@ -62,7 +84,11 @@
 
     {{-- SEGMENTOS DEL BLOQUE --}}
     @forelse($block->segments->sortBy('order_index') as $segIndex => $segment)
-    @php $segNum = "B{$blockNum}." . ($segIndex + 1); @endphp
+    @php
+        $segNum  = "B{$blockNum}." . ($segIndex + 1);
+        $horaFin = $acumulado + $segment->duration_seconds;
+        $acumulado += $segment->duration_seconds;
+    @endphp
 
         <tr class="block-segment segment-of-{{ $block->id }} hover:bg-gray-700/30 transition-colors border-b border-gray-700/30
             {{ match($segment->type) {
@@ -129,8 +155,9 @@
                 </select>
             </td>
 
-            <td class="px-4 py-3 w-32">
-                <div class="flex items-center gap-1">
+            {{-- Duración: input en segundos + display MM:SS --}}
+            <td class="px-4 py-3 w-24">
+                <div class="flex flex-col items-center">
                     <input
                         type="number"
                         name="duration_seconds"
@@ -140,8 +167,17 @@
                         hx-target="#tabla-segmentos"
                         hx-swap="innerHTML"
                         class="bg-transparent border-b border-transparent hover:border-gray-500 focus:border-blue-500 outline-none w-16 text-center font-mono text-sm">
-                    <span class="text-xs text-gray-500">seg</span>
+                    <span class="text-[10px] text-gray-500 font-mono mt-1">
+                        {{ fmtDuration($segment->duration_seconds) }}
+                    </span>
                 </div>
+            </td>
+
+            {{-- Hora estimada de fin --}}
+            <td class="px-4 py-3 w-28 text-center">
+                <span class="font-mono text-yellow-400 text-xs bg-yellow-400/10 px-2 py-1 rounded">
+                    {{ fmtHora($horaFin) }}
+                </span>
             </td>
 
             <td class="px-4 py-3 text-right">
@@ -168,18 +204,17 @@
 
     @empty
         <tr class="segment-of-{{ $block->id }} empty-block-{{ $block->id }}">
-            <td colspan="5" class="px-12 py-3 text-gray-600 italic text-xs">
+            <td colspan="6" class="px-12 py-3 text-gray-600 italic text-xs">
                 Sin ítems. Haz clic en "+ Ítem" para agregar.
             </td>
         </tr>
     @endforelse
 
-    {{-- Separador visual entre bloques --}}
-    <tr class="h-1 bg-gray-900/50"><td colspan="5"></td></tr>
+    <tr class="h-1 bg-gray-900/50"><td colspan="6"></td></tr>
 
 @empty
     <tr>
-        <td colspan="5" class="px-6 py-12 text-center text-gray-500 italic">
+        <td colspan="6" class="px-6 py-12 text-center text-gray-500 italic">
             No hay bloques. Haz clic en "Nuevo Bloque" para comenzar.
         </td>
     </tr>

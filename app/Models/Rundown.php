@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Rundown extends Model
 {
     // Esto permite que el Seeder guarde datos sin errores
-    protected $fillable = ['show_id', 'air_date', 'status'];
+    protected $fillable = ['show_id', 'air_date', 'air_time', 'status'];
 
     // Relación: Una escaleta PERTENECE A un programa
     public function show(): BelongsTo

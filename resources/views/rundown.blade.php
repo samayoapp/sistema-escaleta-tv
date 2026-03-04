@@ -17,7 +17,16 @@
     <header class="flex justify-between items-center mb-8 border-b border-gray-700 pb-4">
         <div>
             <h1 class="text-3xl font-bold text-blue-400">{{ $rundown->show->title }}</h1>
-            <p class="text-gray-400 text-sm">Fecha de emisión: {{ $rundown->air_date }}</p>
+            <p class="text-gray-400 text-sm">
+                Fecha: {{ $rundown->air_date }} &nbsp;·&nbsp;
+                Inicio:
+                <input
+                    type="time"
+                    value="{{ $rundown->air_time ?? '19:00:00' }}"
+                    hx-post="/rundown/{{ $rundown->id }}/update-time"
+                    hx-trigger="change"
+                    class="bg-transparent border-b border-gray-600 text-yellow-400 font-mono text-sm focus:outline-none focus:border-yellow-400 cursor-pointer">
+            </p>
         </div>
         <div class="flex gap-2">
             <a href="/rundown/{{ $rundown->id }}/pdf" target="_blank"
@@ -76,6 +85,7 @@
                             <th class="px-4 py-3 w-12">#</th>
                             <th class="px-4 py-3">Título / Tipo</th>
                             <th class="px-4 py-3 w-32">Duración</th>
+                            <th class="px-4 py-3 w-28 text-center text-yellow-500">⏱ Al Aire</th>
                             <th class="px-4 py-3 text-right">Acciones</th>
                         </tr>
                     </thead>

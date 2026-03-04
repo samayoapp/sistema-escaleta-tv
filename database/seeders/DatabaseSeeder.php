@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
         $rundown = Rundown::create([
             'show_id'  => $show->id,
             'air_date' => '2026-03-02',
+            'air_time' => '15:00:00',
             'status'   => 'produccion',
         ]);
 
