@@ -8,6 +8,22 @@
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <style>
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        tr.segment-selected td {
+            background-color: rgba(234, 179, 8, 0.06) !important;
+        }
+        tr.segment-selected td:first-child {
+            box-shadow: inset 3px 0 0 #eab308;
+        }
+        tr.segment-selected {
+            outline: 1.5px dashed rgba(234, 179, 8, 0.6);
+            outline-offset: -1px;
+        }
+    </style>
 </head>
 <body class="bg-gray-900 text-white font-sans p-6">
 
@@ -20,7 +36,7 @@
             <p class="text-gray-400 text-sm">
                 Fecha: {{ $rundown->air_date }} &nbsp;·&nbsp;
                 Inicio:
-               <input
+                <input
                     type="time"
                     name="air_time"
                     value="{{ substr($rundown->air_time ?? '19:00:00', 0, 5) }}"
@@ -32,10 +48,10 @@
                     class="bg-transparent border-b border-gray-600 text-yellow-400 font-mono text-sm focus:outline-none focus:border-yellow-400 cursor-pointer">
             </p>
         </div>
-        <div class="flex gap-2">
-            <a href="/shows/{{ $rundown->show_id }}" 
+        <div class="flex gap-2 items-center flex-wrap">
+            <a href="/shows/{{ $rundown->show_id }}"
                 class="text-gray-500 hover:text-white transition mr-2">
-                    ← Volver
+                ← Volver
             </a>
             <a href="/rundown/{{ $rundown->id }}/pdf" target="_blank"
                 class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded text-sm font-bold uppercase transition">
@@ -51,7 +67,7 @@
             </a>
             <div class="bg-green-700 px-4 py-2 rounded text-sm font-bold uppercase">
                 🔴 En Producción
-            </div>  
+            </div>
         </div>
     </header>
 
@@ -61,7 +77,6 @@
         {{-- COLUMNA IZQUIERDA: Tabla --}}
         <div class="lg:col-span-2 flex flex-col gap-4">
 
-            {{-- Tiempo total --}}
             <div id="total-duration"
                  class="bg-gray-800 p-4 rounded-lg border border-gray-700 text-right"
                  hx-get="/rundown/{{ $rundown->id }}/get-time"
@@ -69,15 +84,13 @@
                 @include('partials.total-time', ['rundown' => $rundown])
             </div>
 
-            {{-- Tabla de bloques y segmentos --}}
             <div class="bg-gray-800 rounded-lg shadow-2xl overflow-hidden border border-gray-700">
-
-                {{-- Toolbar --}}
                 <div class="p-4 bg-gray-700/50 flex justify-between items-center border-b border-gray-700">
                     <h2 class="text-xs font-bold uppercase text-gray-400 tracking-widest">
                         Estructura del Programa
                     </h2>
                     <button
+                        onclick="justAddedItem = true"
                         hx-post="/rundown/{{ $rundown->id }}/add-block"
                         hx-target="#tabla-segmentos"
                         hx-swap="innerHTML"
@@ -89,16 +102,15 @@
                     </button>
                 </div>
 
-                {{-- Tabla --}}
                 <table class="w-full text-left">
                     <thead>
                         <tr class="bg-gray-700/30 text-gray-400 uppercase text-xs border-b border-gray-700">
                             <th class="px-4 py-3 w-10"></th>
                             <th class="px-4 py-3 w-12">#</th>
                             <th class="px-4 py-3">Título / Tipo</th>
-                            <th class="px-4 py-3 w-32">Duración</th>
+                            <th class="px-4 py-3 w-24 text-center">Duración</th>
                             <th class="px-4 py-3 w-28 text-center text-yellow-500">⏱ Al Aire</th>
-                            <th class="px-4 py-3 text-right">Acciones</th>
+                            <th class="px-4 py-3 w-10"></th>
                         </tr>
                     </thead>
                     <tbody id="tabla-segmentos" class="divide-y divide-gray-700/30">
@@ -108,26 +120,128 @@
             </div>
         </div>
 
-        {{-- COLUMNA DERECHA: Editor de guion --}}
+        {{-- COLUMNA DERECHA: Panel de propiedades --}}
         <div id="editor-container"
-             class="bg-gray-800 rounded-lg p-6 shadow-2xl border border-gray-700 min-h-[500px] self-start sticky top-6">
+             class="bg-gray-800 rounded-lg p-5 shadow-2xl border border-gray-700 self-start sticky top-6 transition-all">
             <div class="flex flex-col items-center justify-center h-64 text-gray-600 italic text-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-4 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mb-3 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/>
                 </svg>
-                <p class="text-sm">Selecciona un segmento para editar su guion literario.</p>
+                <p class="text-sm">Haz clic en un ítem<br>para ver sus propiedades.</p>
             </div>
         </div>
 
     </div>
 </div>
+
 <script>
-    // CSRF para HTMX
+    // ── CSRF ──────────────────────────────────────────────────────────────
     document.body.addEventListener('htmx:configRequest', (event) => {
         event.detail.headers['X-CSRF-Token'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     });
 
-    // Collapse/Expand de bloques
+    // ── BANDERAS para foco en nuevo ítem ──────────────────────────────────
+    let justAddedItem  = false;
+    let addedToBlockId = null;
+
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('button[hx-post*="add-segment"]');
+        if (btn) {
+            justAddedItem = true;
+            const match = btn.getAttribute('hx-post').match(/\/block\/(\d+)\/add-segment/);
+            addedToBlockId = match ? match[1] : null;
+        }
+    });
+
+    // ── SELECCIÓN ─────────────────────────────────────────────────────────
+    let selectedSegmentId = null;
+
+    function seleccionarSegmento(segmentId, row) {
+        if (selectedSegmentId === segmentId) {
+            deseleccionarSegmento();
+            return;
+        }
+
+        document.querySelectorAll('tr.segment-selected')
+            .forEach(r => r.classList.remove('segment-selected'));
+
+        selectedSegmentId = segmentId;
+        row.classList.add('segment-selected');
+
+        const panel = document.getElementById('editor-container');
+        panel.classList.add('border-yellow-500/40');
+        panel.classList.remove('border-gray-700');
+
+        htmx.ajax('GET', '/segment/' + segmentId + '/edit', {
+            target: '#editor-container',
+            swap: 'innerHTML'
+        });
+    }
+
+    function deseleccionarSegmento() {
+        selectedSegmentId = null;
+        document.querySelectorAll('tr.segment-selected')
+            .forEach(r => r.classList.remove('segment-selected'));
+
+        const panel = document.getElementById('editor-container');
+        panel.classList.remove('border-yellow-500/40');
+        panel.classList.add('border-gray-700');
+        panel.innerHTML = `
+            <div class="flex flex-col items-center justify-center h-64 text-gray-600 italic text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mb-3 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/>
+                </svg>
+                <p class="text-sm">Haz clic en un ítem<br>para ver sus propiedades.</p>
+            </div>
+        `;
+    }
+
+    // ── AFTER SWAP ────────────────────────────────────────────────────────
+    document.addEventListener('htmx:afterSwap', function(e) {
+        if (e.detail.target.id !== 'tabla-segmentos') return;
+
+        sortableInstance = null;
+        initSortable();
+
+        // Restaurar selección visual
+        if (selectedSegmentId) {
+            const row = document.getElementById('segment-' + selectedSegmentId);
+            if (row) row.classList.add('segment-selected');
+        }
+
+        // Solo enfocar si se agregó ítem/bloque nuevo
+        if (justAddedItem) {
+            justAddedItem = false;
+            setTimeout(() => {
+                if (addedToBlockId) {
+                    // Último ítem del bloque específico donde se agregó
+                    const segRows = document.querySelectorAll(
+                        `#tabla-segmentos tr.segment-of-${addedToBlockId}`
+                    );
+                    if (segRows.length > 0) {
+                        const lastInput = segRows[segRows.length - 1].querySelector('input.seg-title-input');
+                        if (lastInput) {
+                            lastInput.focus();
+                            lastInput.select();
+                            lastInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            addedToBlockId = null;
+                            return;
+                        }
+                    }
+                }
+                // Fallback: nuevo bloque vacío — enfocar input del último bloque
+                const blockInputs = document.querySelectorAll('#tabla-segmentos .block-header input[name="title"]');
+                if (blockInputs.length > 0) {
+                    const last = blockInputs[blockInputs.length - 1];
+                    last.focus();
+                    last.select();
+                    last.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 80);
+        } // ← cierre del if(justAddedItem)
+    }); // ← cierre del addEventListener
+
+    // ── COLLAPSE / EXPAND ─────────────────────────────────────────────────
     function toggleBlock(blockId) {
         const rows = document.querySelectorAll('.segment-of-' + blockId);
         const arrow = document.getElementById('arrow-' + blockId);
@@ -137,7 +251,7 @@
         arrow.classList.toggle('rotate-0', isOpen);
     }
 
-    // Sortable — un solo Sortable en todo el tbody
+    // ── SORTABLE ──────────────────────────────────────────────────────────
     let sortableInstance = null;
 
     function initSortable() {
@@ -148,28 +262,23 @@
             animation: 150,
             handle: '.drag-handle',
             ghostClass: 'opacity-20',
-            draggable: '.block-segment',  // Solo arrastra filas de segmentos, no cabeceras
-            onEnd: function(evt) {
-                // Reconstruimos el payload leyendo el DOM en orden visual
-                // Para cada segmento visible, leemos a qué bloque pertenece su cabecera más cercana
+            draggable: '.block-segment',
+            onEnd: function() {
                 const rows = [...tbody.querySelectorAll('tr')];
-                const payload = {}; // { blockId: [segId, segId, ...] }
+                const payload = {};
                 let currentBlockId = null;
 
                 rows.forEach(row => {
-                    // Si es cabecera de bloque, actualizamos el bloque actual
                     if (row.classList.contains('block-header')) {
                         currentBlockId = row.dataset.blockId;
                         if (!payload[currentBlockId]) payload[currentBlockId] = [];
                     }
-                    // Si es segmento, lo asignamos al bloque actual
                     if (row.classList.contains('block-segment') && currentBlockId) {
                         const segId = row.dataset.segmentId;
                         if (segId) payload[currentBlockId].push(segId);
                     }
                 });
 
-                // Enviamos al servidor
                 fetch('/rundown/{{ $rundown->id }}/reorder', {
                     method: 'POST',
                     headers: {
@@ -190,14 +299,6 @@
     }
 
     document.addEventListener('DOMContentLoaded', initSortable);
-
-    // Reinicializar después de swaps de HTMX
-    document.addEventListener('htmx:afterSwap', function(e) {
-        if (e.detail.target.id === 'tabla-segmentos') {
-            sortableInstance = null;
-            initSortable();
-        }
-    });
 </script>
 
 </body>

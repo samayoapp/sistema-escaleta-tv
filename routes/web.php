@@ -34,3 +34,4 @@ Route::delete('/shows/{id}', [ShowController::class, 'destroy']);
 
 // ── Rundown ────────────────────────────────────────────
 Route::get('/rundown/{id}',                        [RundownController::class, 'index']);
+Route::post('/segment/{id}/toggle-script',         [RundownController::class, 'toggleScript']);

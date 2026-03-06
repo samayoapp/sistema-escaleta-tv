@@ -36,11 +36,23 @@ class RundownController extends Controller
 
     // ─── Segmentos ────────────────────────────────────────────────────────────
 
-    public function editSegment($id)
-    {
-        $segment = Segment::findOrFail($id);
-        return view('editor-segmento', compact('segment'));
-    }
+public function editSegment($id)
+{
+    $segment = Segment::with(['block'])->findOrFail($id);
+
+    // Calcular el código B1.2 etc.
+    $block    = $segment->block;
+    $rundown  = Rundown::with([
+        'blocks'          => fn($q) => $q->orderBy('order_index'),
+        'blocks.segments' => fn($q) => $q->orderBy('order_index'),
+    ])->findOrFail($segment->rundown_id);
+
+    $blockIndex = $rundown->blocks->search(fn($b) => $b->id === $block->id);
+    $segIndex   = $block->segments->search(fn($s) => $s->id === $segment->id);
+    $segNum     = 'B' . ($blockIndex + 1) . '.' . ($segIndex + 1);
+
+    return view('editor-segmento', compact('segment', 'segNum'));
+}
 
     public function updateScript(Request $request, $id)
     {
@@ -198,5 +210,16 @@ class RundownController extends Controller
         $filename = 'escaleta-' . str($rundown->show->title)->slug() . '-' . $rundown->air_date . '.pdf';
 
         return $pdf->download($filename);
+    }
+
+    public function toggleScript($id)
+    {
+        $segment = Segment::findOrFail($id);
+        $segment->has_script = !$segment->has_script;
+        $segment->save();
+
+        // Recarga tabla Y panel de propiedades
+        $this->renderTable($segment->rundown_id); // actualiza tabla en background
+        return $this->editSegment($id); // devuelve panel actualizado
     }
 }

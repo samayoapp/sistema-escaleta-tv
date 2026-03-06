@@ -15,6 +15,7 @@
 @php
     $blockNum   = $blockIndex + 1;
     $blockStart = $acumulado;
+    $isLast     = $loop->last;
 @endphp
 
     {{-- CABECERA DEL BLOQUE --}}
@@ -38,14 +39,20 @@
             </span>
         </td>
 
-        <td class="px-2 py-2">
+        {{-- Título bloque editable --}}
+        <td class="px-2 py-2 col-titulo-bloque">
             <input
                 type="text"
                 value="{{ $block->title }}"
                 name="title"
                 hx-post="/block/{{ $block->id }}/update"
-                hx-trigger="keyup changed delay:1s"
-                class="bg-transparent border-none text-blue-400 font-bold uppercase text-xs focus:ring-0 focus:outline-none w-full tracking-widest cursor-text">
+                hx-trigger="keyup[key=='Enter'], blur"
+                hx-swap="none"
+                onkeydown="if(event.key==='Enter') this.blur()"
+                class="bg-transparent border-b border-transparent text-blue-400 font-bold uppercase text-xs
+                       focus:ring-0 focus:outline-none focus:border-blue-400 focus:bg-blue-900/40
+                       focus:px-2 focus:rounded w-full tracking-widest cursor-text transition-all duration-150
+                       hover:border-blue-700">
         </td>
 
         <td class="px-4 py-2 text-right w-24">
@@ -54,7 +61,6 @@
             </span>
         </td>
 
-        {{-- Hora de inicio del bloque --}}
         <td class="px-4 py-2 text-center w-28">
             <span class="text-[10px] text-blue-400 font-mono bg-blue-900/20 px-2 py-1 rounded">
                 ▶ {{ fmtHora($blockStart) }}
@@ -88,24 +94,30 @@
         $segNum  = "B{$blockNum}." . ($segIndex + 1);
         $horaFin = $acumulado + $segment->duration_seconds;
         $acumulado += $segment->duration_seconds;
+        $isLastSeg = $loop->last && $isLast;
     @endphp
 
-        <tr class="block-segment segment-of-{{ $block->id }} hover:bg-gray-700/30 transition-colors border-b border-gray-700/30
+        <tr class="block-segment segment-of-{{ $block->id }} transition-colors border-b border-gray-700/30
             {{ match($segment->type) {
-                'VIVO'            => 'border-l-4 border-l-red-500 bg-red-500/5',
-                'VTR'             => 'border-l-4 border-l-green-500 bg-green-500/5',
-                'OFF'             => 'border-l-4 border-l-purple-500 bg-purple-500/5',
-                'CORTE_COMERCIAL' => 'border-l-4 border-l-yellow-500 bg-yellow-500/5',
-                'NOTA_SECA'       => 'border-l-4 border-l-gray-500 bg-gray-500/5',
-                'PRESENTACION'    => 'border-l-4 border-l-blue-400 bg-blue-400/5',
-                'CIERRE'          => 'border-l-4 border-l-orange-500 bg-orange-500/5',
-                default           => ''
+                'VIVO'            => 'border-l-4 border-l-red-500 bg-red-500/5 hover:bg-red-500/10',
+                'VTR'             => 'border-l-4 border-l-green-500 bg-green-500/5 hover:bg-green-500/10',
+                'OFF'             => 'border-l-4 border-l-purple-500 bg-purple-500/5 hover:bg-purple-500/10',
+                'CORTE_COMERCIAL' => 'border-l-4 border-l-yellow-500 bg-yellow-500/5 hover:bg-yellow-500/10',
+                'NOTA_SECA'       => 'border-l-4 border-l-gray-500 bg-gray-500/5 hover:bg-gray-500/10',
+                'PRESENTACION'    => 'border-l-4 border-l-blue-400 bg-blue-400/5 hover:bg-blue-400/10',
+                'CIERRE'          => 'border-l-4 border-l-orange-500 bg-orange-500/5 hover:bg-orange-500/10',
+                default           => 'hover:bg-gray-700/30'
             } }}"
             id="segment-{{ $segment->id }}"
             data-segment-id="{{ $segment->id }}"
-            data-block-id="{{ $block->id }}">
+            data-block-id="{{ $block->id }}"
+            data-seg-num="{{ $segNum }}"
+            data-has-script="{{ $segment->has_script ? '1' : '0' }}"
+            data-is-new="{{ $isLastSeg ? '1' : '0' }}"
+            onclick="seleccionarSegmento({{ $segment->id }}, this)">
 
-            <td class="px-4 py-3 w-10">
+            {{-- Drag handle --}}
+            <td class="px-4 py-3 w-10" onclick="event.stopPropagation()">
                 <div class="drag-handle cursor-grab active:cursor-grabbing text-gray-600 hover:text-blue-400 transition">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/>
@@ -113,20 +125,25 @@
                 </div>
             </td>
 
+            {{-- Código --}}
             <td class="px-4 py-3 w-12">
                 <span class="font-mono text-blue-300 text-xs">{{ $segNum }}</span>
             </td>
 
-            <td class="px-4 py-3">
+            {{-- Título editable inline + tipo --}}
+            <td class="px-4 py-3" onclick="event.stopPropagation()">
                 <input
                     type="text"
                     name="title"
                     value="{{ $segment->title }}"
                     hx-post="/segment/{{ $segment->id }}/update-field"
-                    hx-trigger="keyup changed delay:1s"
+                    hx-trigger="keyup[key=='Enter'], blur"
                     hx-target="#tabla-segmentos"
                     hx-swap="innerHTML"
-                    class="bg-transparent border-b border-transparent hover:border-gray-500 focus:border-blue-500 outline-none w-full transition-all py-1 text-sm">
+                    onkeydown="if(event.key==='Enter') this.blur()"
+                    class="seg-title-input bg-transparent border-b border-transparent
+                           hover:border-gray-500 focus:border-blue-400 focus:bg-gray-700/40 focus:px-2 focus:rounded
+                           outline-none w-full transition-all py-1 text-sm text-white">
 
                 <select
                     name="type"
@@ -153,52 +170,53 @@
                     <option value="PRESENTACION"    {{ $segment->type == 'PRESENTACION'    ? 'selected' : '' }} class="bg-gray-800">🎤 PRESENTACIÓN</option>
                     <option value="CIERRE"          {{ $segment->type == 'CIERRE'          ? 'selected' : '' }} class="bg-gray-800">🏁 CIERRE</option>
                 </select>
+
+                @if($segment->has_script)
+                    <span class="text-[9px] text-blue-500/60 ml-1">· guion</span>
+                @endif
             </td>
 
-            {{-- Duración: input en segundos + display MM:SS --}}
-            <td class="px-4 py-3 w-24">
+            {{-- Duración editable inline --}}
+            <td class="px-4 py-3 w-28" onclick="event.stopPropagation()">
                 <div class="flex flex-col items-center">
                     <input
                         type="number"
                         name="duration_seconds"
                         value="{{ $segment->duration_seconds }}"
                         hx-post="/segment/{{ $segment->id }}/update-field"
-                        hx-trigger="keyup changed delay:1s"
+                        hx-trigger="keyup[key=='Enter'], blur"
                         hx-target="#tabla-segmentos"
                         hx-swap="innerHTML"
-                        class="bg-transparent border-b border-transparent hover:border-gray-500 focus:border-blue-500 outline-none w-16 text-center font-mono text-sm">
-                    <span class="text-[10px] text-gray-500 font-mono mt-1">
+                        onkeydown="if(event.key==='Enter') this.blur()"
+                        style="-moz-appearance:textfield;"
+                        class="bg-transparent border-b border-transparent hover:border-gray-500
+                               focus:border-blue-400 outline-none w-16 text-center font-mono text-sm
+                               [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                    <span class="text-[10px] text-gray-500 font-mono mt-0.5">
                         {{ fmtDuration($segment->duration_seconds) }}
                     </span>
                 </div>
             </td>
 
-            {{-- Hora estimada de fin --}}
+            {{-- Hora al aire --}}
             <td class="px-4 py-3 w-28 text-center">
                 <span class="font-mono text-yellow-400 text-xs bg-yellow-400/10 px-2 py-1 rounded">
                     {{ fmtHora($horaFin) }}
                 </span>
             </td>
 
-            <td class="px-4 py-3 text-right">
-                <div class="flex justify-end gap-2">
-                    <button
-                        hx-get="/segment/{{ $segment->id }}/edit"
-                        hx-target="#editor-container"
-                        class="bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded text-xs transition font-bold uppercase">
-                        ✏️ Guion
-                    </button>
-                    <button
-                        hx-delete="/segment/{{ $segment->id }}"
-                        hx-confirm="¿Eliminar este segmento?"
-                        hx-target="#tabla-segmentos"
-                        hx-swap="innerHTML"
-                        class="bg-red-900/50 hover:bg-red-600 text-red-300 p-1 rounded transition">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                        </svg>
-                    </button>
-                </div>
+            {{-- Eliminar --}}
+            <td class="px-4 py-3 text-right" onclick="event.stopPropagation()">
+                <button
+                    hx-delete="/segment/{{ $segment->id }}"
+                    hx-confirm="¿Eliminar este segmento?"
+                    hx-target="#tabla-segmentos"
+                    hx-swap="innerHTML"
+                    class="bg-red-900/50 hover:bg-red-600 text-red-300 p-1 rounded transition opacity-30 hover:opacity-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                </button>
             </td>
         </tr>
 
