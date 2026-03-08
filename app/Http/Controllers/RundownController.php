@@ -270,12 +270,12 @@ public function editSegment($id)
             ]);
         }
 
-        $locked = $this->calcLocked($rundown);
-
         $rundown = Rundown::with([
             'blocks'          => fn($q) => $q->orderBy('order_index'),
             'blocks.segments' => fn($q) => $q->orderBy('order_index'),
         ])->findOrFail($block->rundown_id);
+
+        $locked = $this->calcLocked($rundown);
 
         return response(view('partials.table-body', compact('rundown', 'locked'))->render())
             ->withHeaders(['HX-Trigger' => json_encode([
