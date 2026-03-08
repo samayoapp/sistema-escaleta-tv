@@ -25,32 +25,42 @@
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white font-sans p-6">
+<body class="bg-gray-900 text-white font-sans">
 
+@include('partials.navbar')
+
+<div class="p-6">
 @php
-    $airDateTime = \Carbon\Carbon::parse(
-        $rundown->air_date . ' ' . ($rundown->air_time ?? '00:00:00')
+    $tz = 'America/Tegucigalpa';
+    // Parsear fecha/hora de la escaleta EN timezone local
+    $airDateTime = \Carbon\Carbon::createFromFormat(
+        'Y-m-d H:i:s',
+        $rundown->air_date . ' ' . ($rundown->air_time ?? '00:00:00'),
+        $tz
     );
-    $locked = $airDateTime->isPast();
+    // "now" también en Tegucigalpa para comparar manzanas con manzanas
+    $nowLocal = \Carbon\Carbon::now($tz);
+    // Bloqueado cuando ya pasó 1 hora desde la hora de emisión
+    $locked = $nowLocal->greaterThan($airDateTime->copy()->addHour());
 @endphp
 
 <div class="max-w-7xl mx-auto">
 
-    {{-- BANNER CORRIDA --}}
+    {{-- BANNER VENCIDA --}}
     @if($locked)
-    <div class="mb-6 bg-gray-800/80 border border-gray-600 rounded-lg px-5 py-4 flex items-center justify-between">
+    <div class="mb-6 bg-red-950/30 border-2 border-dashed border-red-700/70 rounded-lg px-5 py-4 flex items-center justify-between">
         <div class="flex items-center gap-3">
-            <span class="text-2xl">📼</span>
+            <span class="text-2xl">🔴</span>
             <div>
-                <div class="text-gray-300 font-bold uppercase tracking-widest text-sm">Escaleta Archivada — Ya salió al aire</div>
-                <div class="text-gray-500 text-xs mt-0.5">
-                    Emitida el {{ $airDateTime->format('d/m/Y') }} a las {{ $airDateTime->format('H:i') }}.
-                    Para editar, cambia la fecha/hora desde el repositorio de escaletas.
+                <div class="text-red-400 font-bold uppercase tracking-widest text-sm">Escaleta Vencida — Solo lectura</div>
+                <div class="text-red-500/60 text-xs mt-0.5">
+                    Venció el {{ $airDateTime->format('d/m/Y') }} a las {{ $airDateTime->format('H:i') }} (Tegucigalpa).
+                    Para reactivar, cambia la fecha/hora desde el repositorio de escaletas.
                 </div>
             </div>
         </div>
         <a href="/shows/{{ $rundown->show_id }}"
-           class="text-xs text-gray-400 hover:text-white border border-gray-600 hover:border-gray-400 px-3 py-2 rounded transition">
+           class="text-xs text-red-400/70 hover:text-white border border-red-700/50 hover:border-gray-400 px-3 py-2 rounded transition">
             Ir al repositorio →
         </a>
     </div>
@@ -59,9 +69,21 @@
     {{-- HEADER --}}
     <header class="flex justify-between items-center mb-8 border-b border-gray-700 pb-4 {{ $locked ? 'opacity-60' : '' }}">
         <div>
-            <h1 class="text-3xl font-bold {{ $locked ? 'text-gray-500' : 'text-blue-400' }}">
-                {{ $rundown->show->title }}
-            </h1>
+            <div class="flex items-center gap-4 mb-1">
+                <h1 class="text-3xl font-bold {{ $locked ? 'text-gray-500' : 'text-blue-400' }}">
+                    {{ $rundown->show->title }}
+                </h1>
+                {{-- RELOJ EN TIEMPO REAL GMT-6 --}}
+                <div class="flex flex-col items-start">
+                    <div id="reloj-hora"
+                         class="font-mono font-bold text-2xl {{ $locked ? 'text-gray-600' : 'text-yellow-400' }} leading-none tabular-nums">
+                        --:--:--
+                    </div>
+                    <div class="text-[10px] text-gray-600 uppercase tracking-widest mt-0.5">
+                        Tegucigalpa · GMT-6
+                    </div>
+                </div>
+            </div>
             <p class="{{ $locked ? 'text-gray-600' : 'text-gray-400' }} text-sm">
                 Fecha: {{ $rundown->air_date }} &nbsp;·&nbsp;
                 Inicio: {{ substr($rundown->air_time ?? '00:00:00', 0, 5) }}
@@ -147,12 +169,35 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mb-3 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/>
                 </svg>
-                <p class="text-sm">{{ $locked ? 'Escaleta bloqueada.' : 'Haz clic en un ítem para ver sus propiedades.' }}</p>
+                <p class="text-sm">{{ $locked ? 'Solo lectura — Haz clic en un ítem para ver sus propiedades.' : 'Haz clic en un ítem para ver sus propiedades.' }}</p>
             </div>
         </div>
 
+    </div>{{-- fin grid --}}
+</div>{{-- fin max-w --}}
+</div>{{-- fin p-6 --}}
+
+{{-- FOOTER --}}
+<footer class="max-w-7xl mx-auto px-6 mt-24 pb-12 border-t border-gray-800">
+    <div class="flex flex-col items-center justify-center gap-2 pt-8">
+        <div class="flex items-center gap-2 text-gray-700">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 10l4.553-2.069A1 1 0 0121 8.882v6.236a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/>
+            </svg>
+            <span class="text-xs font-bold uppercase tracking-widest text-gray-600">
+                {{ $rundown->show->title }}
+            </span>
+        </div>
+        <p class="text-[11px] text-gray-700 tracking-wider">
+            &copy; {{ date('Y') }} {{ $rundown->show->channel ? $rundown->show->channel . ' · ' : '' }}Sistema de Producción Televisiva
+        </p>
+        <p class="text-[10px] text-gray-800 mt-1">
+            Escaleta del {{ \Carbon\Carbon::parse($rundown->air_date)->translatedFormat('d \d\e F \d\e Y') }}
+            &nbsp;·&nbsp; Generado con ProducciónTV
+        </p>
     </div>
-</div>
+</footer>
 
 <script>
     const LOCKED = {{ $locked ? 'true' : 'false' }};
@@ -266,12 +311,26 @@
         }, 80);
     });
 
+    // ── RELOJ GMT-6 TEGUCIGALPA ───────────────────────────────────────────
+    function actualizarReloj() {
+        const ahora = new Date();
+        // Offset GMT-6 en minutos: -360
+        const utc = ahora.getTime() + ahora.getTimezoneOffset() * 60000;
+        const gmt6 = new Date(utc + (-6 * 3600000));
+        const hh = String(gmt6.getHours()).padStart(2, '0');
+        const mm = String(gmt6.getMinutes()).padStart(2, '0');
+        const ss = String(gmt6.getSeconds()).padStart(2, '0');
+        const el = document.getElementById('reloj-hora');
+        if (el) el.textContent = `${hh}:${mm}:${ss}`;
+    }
+    actualizarReloj();
+    setInterval(actualizarReloj, 1000);
+
     // ── SELECCIÓN ─────────────────────────────────────────────────────────
     let selectedSegmentId = null;
 
     function seleccionarSegmento(segmentId, row) {
-        if (LOCKED) return;
-
+        // Siempre permite seleccionar para ver propiedades, incluso en modo locked
         if (selectedSegmentId === segmentId) {
             deseleccionarSegmento();
             return;

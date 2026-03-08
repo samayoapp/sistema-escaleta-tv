@@ -10,22 +10,25 @@
 </head>
 <body class="bg-gray-900 text-white font-sans min-h-screen">
 
+@include('partials.navbar')
+
 <div class="max-w-6xl mx-auto px-6 py-10">
 
-    {{-- HEADER --}}
+    {{-- HEADER DE PÁGINA --}}
     <header class="flex justify-between items-center mb-10 border-b border-gray-700 pb-6">
         <div>
-            <h1 class="text-3xl font-bold text-blue-400 tracking-wide">📺 Producción TV</h1>
-            <p class="text-gray-500 text-sm mt-1">Catálogo de Programas</p>
+            <h1 class="text-3xl font-bold text-blue-400 tracking-wide">Catálogo de Programas</h1>
+            <p class="text-gray-500 text-sm mt-1">{{ $shows->count() }} programa{{ $shows->count() !== 1 ? 's' : '' }} registrado{{ $shows->count() !== 1 ? 's' : '' }}</p>
         </div>
-        {{-- Botón nuevo show --}}
-        <button onclick="document.getElementById('modal-nuevo-show').classList.remove('hidden')"
-            class="bg-blue-600 hover:bg-blue-500 px-5 py-2 rounded text-sm font-bold uppercase tracking-widest transition flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-            Nuevo Programa
-        </button>
+        @if(auth()->user()->isAdmin())
+            <button onclick="document.getElementById('modal-nuevo-show').classList.remove('hidden')"
+                class="bg-blue-600 hover:bg-blue-500 px-5 py-2 rounded text-sm font-bold uppercase tracking-widest transition flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Nuevo Programa
+            </button>
+        @endif
     </header>
 
     {{-- SHOWS ACTIVOS --}}
@@ -71,6 +74,7 @@
                         </a>
 
                         {{-- Acciones --}}
+                        @if(auth()->user()->isAdmin())
                         <div class="px-5 pb-4 flex gap-2">
                             <button onclick="abrirEditar({{ $show->id }}, '{{ addslashes($show->title) }}', '{{ addslashes($show->channel ?? '') }}', '{{ addslashes($show->description ?? '') }}')"
                                 class="text-xs text-gray-500 hover:text-white transition">
@@ -91,6 +95,7 @@
                                 </button>
                             </form>
                         </div>
+                        @endif
                     </div>
                 @endforeach
             </div>

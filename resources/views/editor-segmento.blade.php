@@ -1,12 +1,19 @@
 <div class="flex flex-col gap-0" id="properties-panel">
 
+@php $locked = $locked ?? false; @endphp
+
     {{-- HEADER --}}
     <div class="flex items-center justify-between border-b border-gray-700 pb-3 mb-4">
         <div class="flex items-center gap-2">
             <span class="font-mono text-xs font-bold text-blue-400 bg-blue-900/40 px-2 py-1 rounded">
                 {{ $segNum ?? '—' }}
             </span>
-            <span class="text-[10px] uppercase text-gray-500 tracking-widest">Propiedades</span>
+            <span class="text-[10px] uppercase text-gray-500 tracking-widest">
+                {{ $locked ? 'Solo Lectura' : 'Propiedades' }}
+            </span>
+            @if($locked)
+                <span class="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-gray-700/50 text-gray-500">📼 Vencida</span>
+            @endif
         </div>
         <button onclick="deseleccionarSegmento()"
             class="text-gray-600 hover:text-white transition text-sm leading-none">✕</button>
@@ -15,6 +22,11 @@
     {{-- TÍTULO --}}
     <div class="mb-4">
         <label class="text-[10px] uppercase text-gray-500 font-bold tracking-widest block mb-1">Título</label>
+        @if($locked)
+            <div class="w-full bg-gray-900/50 border border-gray-700/50 rounded px-3 py-2 text-gray-400 text-sm">
+                {{ $segment->title }}
+            </div>
+        @else
         <input
             type="text"
             name="title"
@@ -26,12 +38,22 @@
             onkeydown="if(event.key==='Enter') this.blur()"
             class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm
                    focus:border-blue-500 focus:outline-none hover:border-gray-500 transition">
+        @endif
     </div>
 
-    {{-- TOGGLES: Guion + Teleprompter en la misma fila --}}
+    {{-- TOGGLES: Guion + Teleprompter --}}
     <div class="flex gap-4 mb-3">
 
         {{-- Guion literario --}}
+        @if($locked)
+            <div class="flex items-center gap-2 flex-1 bg-gray-900/30 border border-gray-700/50 rounded px-3 py-2 opacity-50">
+                <input type="checkbox" {{ $segment->has_script ? 'checked' : '' }} disabled class="w-3.5 h-3.5 rounded">
+                <div>
+                    <div class="text-[10px] font-bold uppercase text-gray-600 tracking-widest">Guion</div>
+                    <div class="text-[9px] text-gray-700">Literario</div>
+                </div>
+            </div>
+        @else
         <label class="flex items-center gap-2 cursor-pointer group flex-1 bg-gray-900/50 border border-gray-700 rounded px-3 py-2 hover:border-blue-600 transition">
             <input
                 type="checkbox"
@@ -45,8 +67,18 @@
                 <div class="text-[9px] text-gray-600">Literario</div>
             </div>
         </label>
+        @endif
 
         {{-- Teleprompter --}}
+        @if($locked)
+            <div class="flex items-center gap-2 flex-1 bg-gray-900/30 border border-gray-700/50 rounded px-3 py-2 opacity-50">
+                <input type="checkbox" {{ $segment->in_prompter ? 'checked' : '' }} disabled class="w-3.5 h-3.5 rounded">
+                <div>
+                    <div class="text-[10px] font-bold uppercase text-gray-600 tracking-widest">Prompter</div>
+                    <div class="text-[9px] text-gray-700">Va al aire</div>
+                </div>
+            </div>
+        @else
         <label class="flex items-center gap-2 cursor-pointer group flex-1 bg-gray-900/50 border border-gray-700 rounded px-3 py-2 hover:border-yellow-600 transition">
             <input
                 type="checkbox"
@@ -60,12 +92,16 @@
                 <div class="text-[9px] text-gray-600">Va al aire</div>
             </div>
         </label>
+        @endif
 
     </div>
 
     {{-- GUION LITERARIO --}}
     @if($segment->has_script)
         <div class="mb-5">
+            @if($locked)
+                <div class="w-full bg-gray-900/50 border border-gray-700/50 rounded p-3 text-gray-400 font-mono text-sm leading-relaxed whitespace-pre-wrap min-h-[10rem]">{{ $segment->script_content ?: '(Sin contenido)' }}</div>
+            @else
             <div id="save-indicator" class="text-[10px] text-gray-600 italic mb-1 text-right h-3"></div>
             <textarea
                 name="script_content"
@@ -78,6 +114,7 @@
                        hover:border-gray-500 transition"
                 rows="10"
             >{{ $segment->script_content }}</textarea>
+            @endif
         </div>
     @else
         <div class="bg-gray-900/50 border border-dashed border-gray-700 rounded p-3 text-center mb-5">
@@ -92,6 +129,23 @@
     <div class="grid grid-cols-2 gap-3">
         <div>
             <label class="text-[10px] uppercase text-gray-500 font-bold tracking-widest block mb-1">Tipo</label>
+            @if($locked)
+                @php
+                    $tipoColor = match($segment->type) {
+                        'VIVO'            => 'text-red-400',
+                        'VTR'             => 'text-green-400',
+                        'OFF'             => 'text-purple-400',
+                        'CORTE_COMERCIAL' => 'text-yellow-400',
+                        'NOTA_SECA'       => 'text-gray-400',
+                        'PRESENTACION'    => 'text-blue-400',
+                        'CIERRE'          => 'text-orange-400',
+                        default           => 'text-gray-400'
+                    };
+                @endphp
+                <div class="w-full bg-gray-900/50 border border-gray-700/50 rounded px-2 py-2 text-xs {{ $tipoColor }}">
+                    {{ $segment->type }}
+                </div>
+            @else
             <select
                 name="type"
                 hx-post="/segment/{{ $segment->id }}/update-field"
@@ -118,12 +172,23 @@
                 <option value="PRESENTACION"    {{ $segment->type == 'PRESENTACION'    ? 'selected' : '' }} class="bg-gray-800 text-blue-400">🎤 PRESENTACIÓN</option>
                 <option value="CIERRE"          {{ $segment->type == 'CIERRE'          ? 'selected' : '' }} class="bg-gray-800 text-orange-400">🏁 CIERRE</option>
             </select>
+            @endif
         </div>
 
         <div>
             <label class="text-[10px] uppercase text-gray-500 font-bold tracking-widest block mb-1">
                 Duración <span class="text-gray-700 normal-case">(seg)</span>
             </label>
+            @if($locked)
+                <div class="flex items-center gap-2">
+                    <div class="w-16 bg-gray-900/50 border border-gray-700/50 rounded px-2 py-2 text-gray-400 text-sm font-mono text-center">
+                        {{ $segment->duration_seconds }}
+                    </div>
+                    <span class="text-gray-600 text-xs font-mono">
+                        {{ sprintf('%02d:%02d', floor($segment->duration_seconds / 60), $segment->duration_seconds % 60) }}
+                    </span>
+                </div>
+            @else
             <div class="flex items-center gap-2">
                 <input
                     type="number"
@@ -142,6 +207,7 @@
                     {{ sprintf('%02d:%02d', floor($segment->duration_seconds / 60), $segment->duration_seconds % 60) }}
                 </span>
             </div>
+            @endif
         </div>
     </div>
 

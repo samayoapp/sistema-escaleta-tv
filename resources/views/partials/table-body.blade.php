@@ -139,7 +139,7 @@
             data-segment-id="{{ $segment->id }}"
             data-block-id="{{ $block->id }}"
             data-seg-num="{{ $segNum }}"
-            onclick="{{ $locked ? '' : 'seleccionarSegmento(' . $segment->id . ', this)' }}">
+            onclick="seleccionarSegmento({{ $segment->id }}, this)">
 
             {{-- Drag handle --}}
             <td class="px-4 py-3 w-10" onclick="event.stopPropagation()">

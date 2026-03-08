@@ -18,14 +18,23 @@ class RundownController extends Controller
             'blocks.segments'  => fn($q) => $q->orderBy('order_index'),
         ])->findOrFail($rundownId);
 
-        // Calcular locked igual que en la vista
-        $airDateTime = \Carbon\Carbon::parse(
-            $rundown->air_date . ' ' . ($rundown->air_time ?? '00:00:00')
-        );
-        $locked = $airDateTime->isPast();
+        // Calcular locked con timezone Tegucigalpa
+        $locked = $this->calcLocked($rundown);
 
         return response(view('partials.table-body', compact('rundown', 'locked'))->render())
             ->withHeaders(['HX-Trigger' => json_encode(['refreshTime' => true])]);
+    }
+
+    // ─── Helper: calcular locked con timezone Tegucigalpa ────────────────────
+    private function calcLocked($rundown): bool
+    {
+        $tz = 'America/Tegucigalpa';
+        $airDateTime = \Carbon\Carbon::createFromFormat(
+            'Y-m-d H:i:s',
+            $rundown->air_date . ' ' . ($rundown->air_time ?? '00:00:00'),
+            $tz
+        );
+        return \Carbon\Carbon::now($tz)->greaterThan($airDateTime->copy()->addHour());
     }
 
     // ─── Vista principal — recibe ID del rundown ──────────────────────────────
@@ -57,7 +66,9 @@ public function editSegment($id)
     $segIndex   = $block->segments->search(fn($s) => $s->id === $segment->id);
     $segNum     = 'B' . ($blockIndex + 1) . '.' . ($segIndex + 1);
 
-    return view('editor-segmento', compact('segment', 'segNum'));
+    $locked = $this->calcLocked($rundown);
+
+    return view('editor-segmento', compact('segment', 'segNum', 'locked'));
 }
 
     public function updateScript(Request $request, $id)
@@ -259,22 +270,18 @@ public function editSegment($id)
             ]);
         }
 
-        // PONER ESTO:
+        $locked = $this->calcLocked($rundown);
+
         $rundown = Rundown::with([
             'blocks'          => fn($q) => $q->orderBy('order_index'),
             'blocks.segments' => fn($q) => $q->orderBy('order_index'),
         ])->findOrFail($block->rundown_id);
 
-        $airDateTime = \Carbon\Carbon::parse(
-            $rundown->air_date . ' ' . ($rundown->air_time ?? '00:00:00')
-        );
-        $locked = $airDateTime->isPast();
-
         return response(view('partials.table-body', compact('rundown', 'locked'))->render())
             ->withHeaders(['HX-Trigger' => json_encode([
-                'refreshTime'  => true,
-                'focusSegment' => $newSegment->id,
-        ])]);
+                'refreshTime' => true,
+                'focusSegment' => $newSegment->id  // ← ID exacto del nuevo ítem
+            ])]);
     }
     // Toggle in_prompter
     public function togglePrompter($id)
