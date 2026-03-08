@@ -15,7 +15,7 @@
 @php
     $blockNum   = $blockIndex + 1;
     $blockStart = $acumulado;
-    $isLast     = $loop->last;
+    $segments   = $block->segments->sortBy('order_index');
 @endphp
 
     {{-- CABECERA DEL BLOQUE --}}
@@ -24,7 +24,8 @@
 
         <td class="px-4 py-2 w-10">
             <button onclick="toggleBlock({{ $block->id }})"
-                class="text-blue-400 hover:text-white transition focus:outline-none">
+                class="text-blue-400 hover:text-white transition focus:outline-none {{ $locked ? 'opacity-40 cursor-not-allowed' : '' }}"
+                {{ $locked ? 'disabled' : '' }}>
                 <svg id="arrow-{{ $block->id }}"
                     class="h-4 w-4 transform transition-transform duration-200 rotate-90"
                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -39,20 +40,23 @@
             </span>
         </td>
 
-        {{-- Título bloque editable --}}
         <td class="px-2 py-2 col-titulo-bloque">
-            <input
-                type="text"
-                value="{{ $block->title }}"
-                name="title"
-                hx-post="/block/{{ $block->id }}/update"
-                hx-trigger="keyup[key=='Enter'], blur"
-                hx-swap="none"
-                onkeydown="if(event.key==='Enter') this.blur()"
-                class="bg-transparent border-b border-transparent text-blue-400 font-bold uppercase text-xs
-                       focus:ring-0 focus:outline-none focus:border-blue-400 focus:bg-blue-900/40
-                       focus:px-2 focus:rounded w-full tracking-widest cursor-text transition-all duration-150
-                       hover:border-blue-700">
+            @if($locked)
+                <span class="text-blue-400 font-bold uppercase text-xs tracking-widest">{{ $block->title }}</span>
+            @else
+                <input
+                    type="text"
+                    value="{{ $block->title }}"
+                    name="title"
+                    hx-post="/block/{{ $block->id }}/update"
+                    hx-trigger="keyup[key=='Enter'], blur"
+                    hx-swap="none"
+                    onkeydown="if(event.key==='Enter') this.blur()"
+                    class="bg-transparent border-b border-transparent text-blue-400 font-bold uppercase text-xs
+                           focus:ring-0 focus:outline-none focus:border-blue-400 focus:bg-blue-900/40
+                           focus:px-2 focus:rounded w-full tracking-widest cursor-text transition-all duration-150
+                           hover:border-blue-700">
+            @endif
         </td>
 
         <td class="px-4 py-2 text-right w-24">
@@ -68,6 +72,7 @@
         </td>
 
         <td class="px-4 py-2 text-right">
+            @if(!$locked)
             <div class="flex justify-end gap-2">
                 <button
                     hx-post="/block/{{ $block->id }}/add-segment"
@@ -85,19 +90,43 @@
                     🗑
                 </button>
             </div>
+            @endif
         </td>
     </tr>
 
     {{-- SEGMENTOS DEL BLOQUE --}}
-    @forelse($block->segments->sortBy('order_index') as $segIndex => $segment)
+    @forelse($segments as $segIndex => $segment)
     @php
         $segNum  = "B{$blockNum}." . ($segIndex + 1);
         $horaFin = $acumulado + $segment->duration_seconds;
         $acumulado += $segment->duration_seconds;
-        $isLastSeg = $loop->last && $isLast;
     @endphp
 
+        {{-- FILA INSERTAR ANTES (solo primera posición) --}}
+        @if(!$locked && $segIndex === 0)
+        <tr class="insert-row h-0 overflow-hidden group/insert" data-after-segment="0" data-block-id="{{ $block->id }}">
+            <td colspan="6" class="p-0">
+                <div class="h-0 group-hover/insert:h-6 overflow-hidden transition-all duration-150 flex items-center justify-center">
+                    <button
+                        hx-post="/segment/insert-after/0?block_id={{ $block->id }}"
+                        hx-target="#tabla-segmentos"
+                        hx-swap="innerHTML"
+                        class="w-full h-5 flex items-center justify-center gap-1
+                               text-[10px] font-bold text-green-400 bg-green-900/20 hover:bg-green-900/40
+                               border-y border-dashed border-green-800/40 hover:border-green-600 transition">
+                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Insertar ítem aquí
+                    </button>
+                </div>
+            </td>
+        </tr>
+        @endif
+
+        {{-- FILA DE SEGMENTO --}}
         <tr class="block-segment segment-of-{{ $block->id }} transition-colors border-b border-gray-700/30
+            {{ $locked ? 'opacity-60' : '' }}
             {{ match($segment->type) {
                 'VIVO'            => 'border-l-4 border-l-red-500 bg-red-500/5 hover:bg-red-500/10',
                 'VTR'             => 'border-l-4 border-l-green-500 bg-green-500/5 hover:bg-green-500/10',
@@ -112,17 +141,17 @@
             data-segment-id="{{ $segment->id }}"
             data-block-id="{{ $block->id }}"
             data-seg-num="{{ $segNum }}"
-            data-has-script="{{ $segment->has_script ? '1' : '0' }}"
-            data-is-new="{{ $isLastSeg ? '1' : '0' }}"
-            onclick="seleccionarSegmento({{ $segment->id }}, this)">
+            onclick="{{ $locked ? '' : 'seleccionarSegmento(' . $segment->id . ', this)' }}">
 
             {{-- Drag handle --}}
             <td class="px-4 py-3 w-10" onclick="event.stopPropagation()">
+                @if(!$locked)
                 <div class="drag-handle cursor-grab active:cursor-grabbing text-gray-600 hover:text-blue-400 transition">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/>
                     </svg>
                 </div>
+                @endif
             </td>
 
             {{-- Código --}}
@@ -130,71 +159,83 @@
                 <span class="font-mono text-blue-300 text-xs">{{ $segNum }}</span>
             </td>
 
-            {{-- Título editable inline + tipo --}}
+            {{-- Título + Tipo --}}
             <td class="px-4 py-3" onclick="event.stopPropagation()">
-                <input
-                    type="text"
-                    name="title"
-                    value="{{ $segment->title }}"
-                    hx-post="/segment/{{ $segment->id }}/update-field"
-                    hx-trigger="keyup[key=='Enter'], blur"
-                    hx-target="#tabla-segmentos"
-                    hx-swap="innerHTML"
-                    onkeydown="if(event.key==='Enter') this.blur()"
-                    class="seg-title-input bg-transparent border-b border-transparent
-                           hover:border-gray-500 focus:border-blue-400 focus:bg-gray-700/40 focus:px-2 focus:rounded
-                           outline-none w-full transition-all py-1 text-sm text-white">
-
-                <select
-                    name="type"
-                    hx-post="/segment/{{ $segment->id }}/update-field"
-                    hx-trigger="change"
-                    hx-target="#tabla-segmentos"
-                    hx-swap="innerHTML"
-                    class="bg-transparent text-[10px] font-bold uppercase mt-1 cursor-pointer focus:outline-none
-                    {{ match($segment->type) {
-                        'VIVO'            => 'text-red-400',
-                        'VTR'             => 'text-green-400',
-                        'OFF'             => 'text-purple-400',
-                        'CORTE_COMERCIAL' => 'text-yellow-400',
-                        'NOTA_SECA'       => 'text-gray-400',
-                        'PRESENTACION'    => 'text-blue-400',
-                        'CIERRE'          => 'text-orange-400',
-                        default           => 'text-gray-400'
-                    } }}">
-                    <option value="VIVO"            {{ $segment->type == 'VIVO'            ? 'selected' : '' }} class="bg-gray-800">🔴 VIVO</option>
-                    <option value="VTR"             {{ $segment->type == 'VTR'             ? 'selected' : '' }} class="bg-gray-800">🎬 VTR</option>
-                    <option value="OFF"             {{ $segment->type == 'OFF'             ? 'selected' : '' }} class="bg-gray-800">🎙️ OFF</option>
-                    <option value="CORTE_COMERCIAL" {{ $segment->type == 'CORTE_COMERCIAL' ? 'selected' : '' }} class="bg-gray-800">💰 COMERCIAL</option>
-                    <option value="NOTA_SECA"       {{ $segment->type == 'NOTA_SECA'       ? 'selected' : '' }} class="bg-gray-800">📄 NOTA SECA</option>
-                    <option value="PRESENTACION"    {{ $segment->type == 'PRESENTACION'    ? 'selected' : '' }} class="bg-gray-800">🎤 PRESENTACIÓN</option>
-                    <option value="CIERRE"          {{ $segment->type == 'CIERRE'          ? 'selected' : '' }} class="bg-gray-800">🏁 CIERRE</option>
-                </select>
-
-                @if($segment->has_script)
-                    <span class="text-[9px] text-blue-500/60 ml-1">· guion</span>
-                @endif
-            </td>
-
-            {{-- Duración editable inline --}}
-            <td class="px-4 py-3 w-28" onclick="event.stopPropagation()">
-                <div class="flex flex-col items-center">
+                @if($locked)
+                    <div class="font-medium text-sm text-gray-400">{{ $segment->title }}</div>
+                    <div class="text-[10px] font-bold uppercase mt-0.5 text-gray-600">
+                        {{ $segment->type }}
+                    </div>
+                @else
                     <input
-                        type="number"
-                        name="duration_seconds"
-                        value="{{ $segment->duration_seconds }}"
+                        type="text"
+                        name="title"
+                        value="{{ $segment->title }}"
                         hx-post="/segment/{{ $segment->id }}/update-field"
                         hx-trigger="keyup[key=='Enter'], blur"
                         hx-target="#tabla-segmentos"
                         hx-swap="innerHTML"
                         onkeydown="if(event.key==='Enter') this.blur()"
-                        style="-moz-appearance:textfield;"
-                        class="bg-transparent border-b border-transparent hover:border-gray-500
-                               focus:border-blue-400 outline-none w-16 text-center font-mono text-sm
-                               [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
-                    <span class="text-[10px] text-gray-500 font-mono mt-0.5">
-                        {{ fmtDuration($segment->duration_seconds) }}
-                    </span>
+                        class="seg-title-input bg-transparent border-b border-transparent
+                               hover:border-gray-500 focus:border-blue-400 focus:bg-gray-700/40 focus:px-2 focus:rounded
+                               outline-none w-full transition-all py-1 text-sm text-white">
+                    <select
+                        name="type"
+                        hx-post="/segment/{{ $segment->id }}/update-field"
+                        hx-trigger="change"
+                        hx-target="#tabla-segmentos"
+                        hx-swap="innerHTML"
+                        class="bg-transparent text-[10px] font-bold uppercase mt-1 cursor-pointer focus:outline-none
+                        {{ match($segment->type) {
+                            'VIVO'            => 'text-red-400',
+                            'VTR'             => 'text-green-400',
+                            'OFF'             => 'text-purple-400',
+                            'CORTE_COMERCIAL' => 'text-yellow-400',
+                            'NOTA_SECA'       => 'text-gray-400',
+                            'PRESENTACION'    => 'text-blue-400',
+                            'CIERRE'          => 'text-orange-400',
+                            default           => 'text-gray-400'
+                        } }}">
+                        <option value="VIVO"            {{ $segment->type == 'VIVO'            ? 'selected' : '' }} class="bg-gray-800">🔴 VIVO</option>
+                        <option value="VTR"             {{ $segment->type == 'VTR'             ? 'selected' : '' }} class="bg-gray-800">🎬 VTR</option>
+                        <option value="OFF"             {{ $segment->type == 'OFF'             ? 'selected' : '' }} class="bg-gray-800">🎙️ OFF</option>
+                        <option value="CORTE_COMERCIAL" {{ $segment->type == 'CORTE_COMERCIAL' ? 'selected' : '' }} class="bg-gray-800">💰 COMERCIAL</option>
+                        <option value="NOTA_SECA"       {{ $segment->type == 'NOTA_SECA'       ? 'selected' : '' }} class="bg-gray-800">📄 NOTA SECA</option>
+                        <option value="PRESENTACION"    {{ $segment->type == 'PRESENTACION'    ? 'selected' : '' }} class="bg-gray-800">🎤 PRESENTACIÓN</option>
+                        <option value="CIERRE"          {{ $segment->type == 'CIERRE'          ? 'selected' : '' }} class="bg-gray-800">🏁 CIERRE</option>
+                    </select>
+                    @if($segment->has_script)
+                        <span class="text-[9px] text-blue-500/60 ml-1">· guion</span>
+                    @endif
+                    @if($segment->in_prompter)
+                        <span class="text-[9px] text-yellow-500/60 ml-1">· prompter</span>
+                    @endif
+                @endif
+            </td>
+
+            {{-- Duración --}}
+            <td class="px-4 py-3 w-28" onclick="event.stopPropagation()">
+                <div class="flex flex-col items-center">
+                    @if($locked)
+                        <span class="font-mono text-gray-400 text-sm">{{ fmtDuration($segment->duration_seconds) }}</span>
+                    @else
+                        <input
+                            type="number"
+                            name="duration_seconds"
+                            value="{{ $segment->duration_seconds }}"
+                            hx-post="/segment/{{ $segment->id }}/update-field"
+                            hx-trigger="keyup[key=='Enter'], blur"
+                            hx-target="#tabla-segmentos"
+                            hx-swap="innerHTML"
+                            onkeydown="if(event.key==='Enter') this.blur()"
+                            style="-moz-appearance:textfield;"
+                            class="bg-transparent border-b border-transparent hover:border-gray-500
+                                   focus:border-blue-400 outline-none w-16 text-center font-mono text-sm
+                                   [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                        <span class="text-[10px] text-gray-500 font-mono mt-0.5">
+                            {{ fmtDuration($segment->duration_seconds) }}
+                        </span>
+                    @endif
                 </div>
             </td>
 
@@ -207,6 +248,7 @@
 
             {{-- Eliminar --}}
             <td class="px-4 py-3 text-right" onclick="event.stopPropagation()">
+                @if(!$locked)
                 <button
                     hx-delete="/segment/{{ $segment->id }}"
                     hx-confirm="¿Eliminar este segmento?"
@@ -217,8 +259,31 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                     </svg>
                 </button>
+                @endif
             </td>
         </tr>
+
+        {{-- FILA INSERTAR DESPUÉS (entre ítems y al final del bloque) --}}
+        @if(!$locked)
+        <tr class="insert-row h-0 overflow-hidden group/insert">
+            <td colspan="6" class="p-0">
+                <div class="h-0 group-hover/insert:h-6 overflow-hidden transition-all duration-150 flex items-center justify-center">
+                    <button
+                        hx-post="/segment/insert-after/{{ $segment->id }}"
+                        hx-target="#tabla-segmentos"
+                        hx-swap="innerHTML"
+                        class="w-full h-5 flex items-center justify-center gap-1
+                               text-[10px] font-bold text-green-400 bg-green-900/20 hover:bg-green-900/40
+                               border-y border-dashed border-green-800/40 hover:border-green-600 transition">
+                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Insertar ítem aquí
+                    </button>
+                </div>
+            </td>
+        </tr>
+        @endif
 
     @empty
         <tr class="segment-of-{{ $block->id }} empty-block-{{ $block->id }}">

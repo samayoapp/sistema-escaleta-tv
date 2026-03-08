@@ -18,7 +18,13 @@ class RundownController extends Controller
             'blocks.segments'  => fn($q) => $q->orderBy('order_index'),
         ])->findOrFail($rundownId);
 
-        return response(view('partials.table-body', compact('rundown'))->render())
+        // Calcular locked igual que en la vista
+        $airDateTime = \Carbon\Carbon::parse(
+            $rundown->air_date . ' ' . ($rundown->air_time ?? '00:00:00')
+        );
+        $locked = $airDateTime->isPast();
+
+        return response(view('partials.table-body', compact('rundown', 'locked'))->render())
             ->withHeaders(['HX-Trigger' => json_encode(['refreshTime' => true])]);
     }
 
@@ -222,4 +228,52 @@ public function editSegment($id)
         $this->renderTable($segment->rundown_id); // actualiza tabla en background
         return $this->editSegment($id); // devuelve panel actualizado
     }
+
+    // Insertar ítem después de un segmento específico
+    public function insertSegmentAfter(Request $request, $segmentId)
+    {
+        if ($segmentId == 0) {
+            // Insertar al inicio del bloque
+            $block = Block::findOrFail($request->block_id);
+            $rundownId = $block->rundown_id;
+            // Empujar todos los segmentos del bloque +1
+            $block->segments()->increment('order_index');
+            Segment::create([
+                'rundown_id'       => $rundownId,
+                'block_id'         => $block->id,
+                'order_index'      => 1,
+                'title'            => 'NUEVO ÍTEM',
+                'type'             => 'PRESENTACION',
+                'duration_seconds' => 60,
+            ]);
+        } else {
+            $after = Segment::findOrFail($segmentId);
+            $block = Block::findOrFail($after->block_id);
+            // Empujar segmentos que vienen después
+            $block->segments()
+                ->where('order_index', '>', $after->order_index)
+                ->increment('order_index');
+            Segment::create([
+                'rundown_id'       => $after->rundown_id,
+                'block_id'         => $after->block_id,
+                'order_index'      => $after->order_index + 1,
+                'title'            => 'NUEVO ÍTEM',
+                'type'             => 'PRESENTACION',
+                'duration_seconds' => 60,
+            ]);
+        }
+
+        return $this->renderTable($block->rundown_id);
+    }
+
+    // Toggle in_prompter
+    public function togglePrompter($id)
+    {
+        $segment = Segment::findOrFail($id);
+        $segment->in_prompter = !$segment->in_prompter;
+        $segment->save();
+        return $this->editSegment($id);
+    }
+
+
 }

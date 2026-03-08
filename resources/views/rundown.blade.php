@@ -27,25 +27,46 @@
 </head>
 <body class="bg-gray-900 text-white font-sans p-6">
 
+@php
+    // ── Bloqueo automático por fecha/hora pasada ──
+    $airDateTime = \Carbon\Carbon::parse(
+        $rundown->air_date . ' ' . ($rundown->air_time ?? '00:00:00')
+    );
+    $locked = $airDateTime->isPast();
+@endphp
+
 <div class="max-w-7xl mx-auto">
 
+    {{-- BANNER CORRIDA --}}
+    @if($locked)
+    <div class="mb-6 bg-gray-800/80 border border-gray-600 rounded-lg px-5 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <span class="text-2xl">📼</span>
+            <div>
+                <div class="text-gray-300 font-bold uppercase tracking-widest text-sm">Escaleta Archivada — Ya salió al aire</div>
+                <div class="text-gray-500 text-xs mt-0.5">
+                    Emitida el {{ $airDateTime->format('d/m/Y') }} a las {{ $airDateTime->format('H:i') }}.
+                    Para editar, cambia la fecha/hora desde el repositorio de escaletas.
+                </div>
+            </div>
+        </div>
+        <a href="/shows/{{ $rundown->show_id }}"
+           class="text-xs text-gray-400 hover:text-white border border-gray-600 hover:border-gray-400 px-3 py-2 rounded transition">
+            Ir al repositorio →
+        </a>
+    </div>
+    @endif
+
     {{-- HEADER --}}
-    <header class="flex justify-between items-center mb-8 border-b border-gray-700 pb-4">
+    <header class="flex justify-between items-center mb-8 border-b border-gray-700 pb-4
+        {{ $locked ? 'opacity-60' : '' }}">
         <div>
-            <h1 class="text-3xl font-bold text-blue-400">{{ $rundown->show->title }}</h1>
-            <p class="text-gray-400 text-sm">
+            <h1 class="text-3xl font-bold {{ $locked ? 'text-gray-500' : 'text-blue-400' }}">
+                {{ $rundown->show->title }}
+            </h1>
+            <p class="{{ $locked ? 'text-gray-600' : 'text-gray-400' }} text-sm">
                 Fecha: {{ $rundown->air_date }} &nbsp;·&nbsp;
-                Inicio:
-                <input
-                    type="time"
-                    name="air_time"
-                    value="{{ substr($rundown->air_time ?? '19:00:00', 0, 5) }}"
-                    hx-post="/rundown/{{ $rundown->id }}/update-time"
-                    hx-trigger="blur"
-                    hx-target="#tabla-segmentos"
-                    hx-swap="innerHTML"
-                    hx-include="this"
-                    class="bg-transparent border-b border-gray-600 text-yellow-400 font-mono text-sm focus:outline-none focus:border-yellow-400 cursor-pointer">
+                Inicio: {{ substr($rundown->air_time ?? '00:00:00', 0, 5) }}
             </p>
         </div>
         <div class="flex gap-2 items-center flex-wrap">
@@ -65,9 +86,15 @@
                class="bg-yellow-600 hover:bg-yellow-500 px-4 py-2 rounded text-sm font-bold uppercase transition">
                 📺 Teleprompter
             </a>
+            @if(!$locked)
             <div class="bg-green-700 px-4 py-2 rounded text-sm font-bold uppercase">
                 🔴 En Producción
             </div>
+            @else
+            <div class="bg-gray-700 px-4 py-2 rounded text-sm font-bold uppercase text-gray-400">
+                📼 Corrida
+            </div>
+            @endif
         </div>
     </header>
 
@@ -84,11 +111,12 @@
                 @include('partials.total-time', ['rundown' => $rundown])
             </div>
 
-            <div class="bg-gray-800 rounded-lg shadow-2xl overflow-hidden border border-gray-700">
+            <div class="bg-gray-800 rounded-lg shadow-2xl overflow-hidden border {{ $locked ? 'border-gray-700/50' : 'border-gray-700' }}">
                 <div class="p-4 bg-gray-700/50 flex justify-between items-center border-b border-gray-700">
-                    <h2 class="text-xs font-bold uppercase text-gray-400 tracking-widest">
+                    <h2 class="text-xs font-bold uppercase {{ $locked ? 'text-gray-600' : 'text-gray-400' }} tracking-widest">
                         Estructura del Programa
                     </h2>
+                    @if(!$locked)
                     <button
                         onclick="justAddedItem = true"
                         hx-post="/rundown/{{ $rundown->id }}/add-block"
@@ -100,6 +128,7 @@
                         </svg>
                         NUEVO BLOQUE
                     </button>
+                    @endif
                 </div>
 
                 <table class="w-full text-left">
@@ -114,7 +143,7 @@
                         </tr>
                     </thead>
                     <tbody id="tabla-segmentos" class="divide-y divide-gray-700/30">
-                        @include('partials.table-body', ['rundown' => $rundown])
+                        @include('partials.table-body', ['rundown' => $rundown, 'locked' => $locked])
                     </tbody>
                 </table>
             </div>
@@ -127,7 +156,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mb-3 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/>
                 </svg>
-                <p class="text-sm">Haz clic en un ítem<br>para ver sus propiedades.</p>
+                <p class="text-sm">{{ $locked ? 'Escaleta bloqueada.' : 'Haz clic en un ítem para ver sus propiedades.' }}</p>
             </div>
         </div>
 
@@ -135,6 +164,8 @@
 </div>
 
 <script>
+    const LOCKED = {{ $locked ? 'true' : 'false' }};
+
     // ── CSRF ──────────────────────────────────────────────────────────────
     document.body.addEventListener('htmx:configRequest', (event) => {
         event.detail.headers['X-CSRF-Token'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -151,12 +182,21 @@
             const match = btn.getAttribute('hx-post').match(/\/block\/(\d+)\/add-segment/);
             addedToBlockId = match ? match[1] : null;
         }
+        // También detectar insertar-entre-filas
+        const insertBtn = e.target.closest('button[hx-post*="insert-after"]');
+        if (insertBtn) {
+            justAddedItem = true;
+            const row = insertBtn.closest('tr');
+            addedToBlockId = row ? row.dataset.blockId : null;
+        }
     });
 
     // ── SELECCIÓN ─────────────────────────────────────────────────────────
     let selectedSegmentId = null;
 
     function seleccionarSegmento(segmentId, row) {
+        if (LOCKED) return;
+
         if (selectedSegmentId === segmentId) {
             deseleccionarSegmento();
             return;
@@ -203,18 +243,15 @@
         sortableInstance = null;
         initSortable();
 
-        // Restaurar selección visual
         if (selectedSegmentId) {
             const row = document.getElementById('segment-' + selectedSegmentId);
             if (row) row.classList.add('segment-selected');
         }
 
-        // Solo enfocar si se agregó ítem/bloque nuevo
         if (justAddedItem) {
             justAddedItem = false;
             setTimeout(() => {
                 if (addedToBlockId) {
-                    // Último ítem del bloque específico donde se agregó
                     const segRows = document.querySelectorAll(
                         `#tabla-segmentos tr.segment-of-${addedToBlockId}`
                     );
@@ -229,7 +266,6 @@
                         }
                     }
                 }
-                // Fallback: nuevo bloque vacío — enfocar input del último bloque
                 const blockInputs = document.querySelectorAll('#tabla-segmentos .block-header input[name="title"]');
                 if (blockInputs.length > 0) {
                     const last = blockInputs[blockInputs.length - 1];
@@ -238,8 +274,8 @@
                     last.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
             }, 80);
-        } // ← cierre del if(justAddedItem)
-    }); // ← cierre del addEventListener
+        }
+    });
 
     // ── COLLAPSE / EXPAND ─────────────────────────────────────────────────
     function toggleBlock(blockId) {
@@ -255,6 +291,7 @@
     let sortableInstance = null;
 
     function initSortable() {
+        if (LOCKED) return;
         const tbody = document.getElementById('tabla-segmentos');
         if (!tbody || sortableInstance) return;
 

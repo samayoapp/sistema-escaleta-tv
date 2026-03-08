@@ -12,7 +12,7 @@
             class="text-gray-600 hover:text-white transition text-sm leading-none">✕</button>
     </div>
 
-    {{-- 1. TÍTULO --}}
+    {{-- TÍTULO --}}
     <div class="mb-4">
         <label class="text-[10px] uppercase text-gray-500 font-bold tracking-widest block mb-1">Título</label>
         <input
@@ -28,23 +28,44 @@
                    focus:border-blue-500 focus:outline-none hover:border-gray-500 transition">
     </div>
 
-    {{-- 2. GUION LITERARIO (al tope, es lo más importante) --}}
-    <div class="mb-5">
-        <div class="flex items-center justify-between mb-2">
-            <label class="text-[10px] uppercase text-gray-500 font-bold tracking-widest">Guion Literario</label>
-            <label class="flex items-center gap-2 cursor-pointer group">
-                <span class="text-[10px] text-gray-600 group-hover:text-gray-400 transition">Activar</span>
-                <input
-                    type="checkbox"
-                    {{ $segment->has_script ? 'checked' : '' }}
-                    hx-post="/segment/{{ $segment->id }}/toggle-script"
-                    hx-target="#editor-container"
-                    hx-swap="innerHTML"
-                    class="w-3.5 h-3.5 rounded accent-blue-500 cursor-pointer">
-            </label>
-        </div>
+    {{-- TOGGLES: Guion + Teleprompter en la misma fila --}}
+    <div class="flex gap-4 mb-3">
 
-        @if($segment->has_script)
+        {{-- Guion literario --}}
+        <label class="flex items-center gap-2 cursor-pointer group flex-1 bg-gray-900/50 border border-gray-700 rounded px-3 py-2 hover:border-blue-600 transition">
+            <input
+                type="checkbox"
+                {{ $segment->has_script ? 'checked' : '' }}
+                hx-post="/segment/{{ $segment->id }}/toggle-script"
+                hx-target="#editor-container"
+                hx-swap="innerHTML"
+                class="w-3.5 h-3.5 rounded accent-blue-500 cursor-pointer">
+            <div>
+                <div class="text-[10px] font-bold uppercase text-gray-400 group-hover:text-blue-400 transition tracking-widest">Guion</div>
+                <div class="text-[9px] text-gray-600">Literario</div>
+            </div>
+        </label>
+
+        {{-- Teleprompter --}}
+        <label class="flex items-center gap-2 cursor-pointer group flex-1 bg-gray-900/50 border border-gray-700 rounded px-3 py-2 hover:border-yellow-600 transition">
+            <input
+                type="checkbox"
+                {{ $segment->in_prompter ? 'checked' : '' }}
+                hx-post="/segment/{{ $segment->id }}/toggle-prompter"
+                hx-target="#editor-container"
+                hx-swap="innerHTML"
+                class="w-3.5 h-3.5 rounded accent-yellow-500 cursor-pointer">
+            <div>
+                <div class="text-[10px] font-bold uppercase text-gray-400 group-hover:text-yellow-400 transition tracking-widest">Prompter</div>
+                <div class="text-[9px] text-gray-600">Va al aire</div>
+            </div>
+        </label>
+
+    </div>
+
+    {{-- GUION LITERARIO --}}
+    @if($segment->has_script)
+        <div class="mb-5">
             <div id="save-indicator" class="text-[10px] text-gray-600 italic mb-1 text-right h-3"></div>
             <textarea
                 name="script_content"
@@ -57,18 +78,17 @@
                        hover:border-gray-500 transition"
                 rows="10"
             >{{ $segment->script_content }}</textarea>
-        @else
-            <div class="bg-gray-900/50 border border-dashed border-gray-700 rounded p-4 text-center">
-                <p class="text-xs text-gray-600 italic">Sin guion literario.</p>
-                <p class="text-[10px] text-gray-700 mt-1">Activa el toggle para agregar texto.</p>
-            </div>
-        @endif
-    </div>
+        </div>
+    @else
+        <div class="bg-gray-900/50 border border-dashed border-gray-700 rounded p-3 text-center mb-5">
+            <p class="text-xs text-gray-600 italic">Sin guion literario activado.</p>
+        </div>
+    @endif
 
     {{-- SEPARADOR --}}
     <div class="border-t border-gray-700/60 mb-4"></div>
 
-    {{-- 3. TIPO + DURACIÓN (abajo, ya editables en tabla) --}}
+    {{-- TIPO + DURACIÓN --}}
     <div class="grid grid-cols-2 gap-3">
         <div>
             <label class="text-[10px] uppercase text-gray-500 font-bold tracking-widest block mb-1">Tipo</label>

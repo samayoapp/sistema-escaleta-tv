@@ -15,7 +15,8 @@ class Segment extends Model
     'duration_seconds', 
     'type',
     'script_content', 
-    'has_script'
+    'has_script',
+    'in_prompter'
     ];
 
 // Quita 'block_name' — ya no existe
