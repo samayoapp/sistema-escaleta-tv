@@ -233,13 +233,10 @@ public function editSegment($id)
     public function insertSegmentAfter(Request $request, $segmentId)
     {
         if ($segmentId == 0) {
-            // Insertar al inicio del bloque
             $block = Block::findOrFail($request->block_id);
-            $rundownId = $block->rundown_id;
-            // Empujar todos los segmentos del bloque +1
             $block->segments()->increment('order_index');
-            Segment::create([
-                'rundown_id'       => $rundownId,
+            $newSegment = Segment::create([
+                'rundown_id'       => $block->rundown_id,
                 'block_id'         => $block->id,
                 'order_index'      => 1,
                 'title'            => 'NUEVO ÍTEM',
@@ -249,11 +246,10 @@ public function editSegment($id)
         } else {
             $after = Segment::findOrFail($segmentId);
             $block = Block::findOrFail($after->block_id);
-            // Empujar segmentos que vienen después
             $block->segments()
                 ->where('order_index', '>', $after->order_index)
                 ->increment('order_index');
-            Segment::create([
+            $newSegment = Segment::create([
                 'rundown_id'       => $after->rundown_id,
                 'block_id'         => $after->block_id,
                 'order_index'      => $after->order_index + 1,
@@ -263,9 +259,23 @@ public function editSegment($id)
             ]);
         }
 
-        return $this->renderTable($block->rundown_id);
-    }
+        // PONER ESTO:
+        $rundown = Rundown::with([
+            'blocks'          => fn($q) => $q->orderBy('order_index'),
+            'blocks.segments' => fn($q) => $q->orderBy('order_index'),
+        ])->findOrFail($block->rundown_id);
 
+        $airDateTime = \Carbon\Carbon::parse(
+            $rundown->air_date . ' ' . ($rundown->air_time ?? '00:00:00')
+        );
+        $locked = $airDateTime->isPast();
+
+        return response(view('partials.table-body', compact('rundown', 'locked'))->render())
+            ->withHeaders(['HX-Trigger' => json_encode([
+                'refreshTime'  => true,
+                'focusSegment' => $newSegment->id,
+        ])]);
+    }
     // Toggle in_prompter
     public function togglePrompter($id)
     {

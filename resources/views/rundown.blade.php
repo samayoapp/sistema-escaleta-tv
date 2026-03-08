@@ -28,7 +28,6 @@
 <body class="bg-gray-900 text-white font-sans p-6">
 
 @php
-    // ── Bloqueo automático por fecha/hora pasada ──
     $airDateTime = \Carbon\Carbon::parse(
         $rundown->air_date . ' ' . ($rundown->air_time ?? '00:00:00')
     );
@@ -58,8 +57,7 @@
     @endif
 
     {{-- HEADER --}}
-    <header class="flex justify-between items-center mb-8 border-b border-gray-700 pb-4
-        {{ $locked ? 'opacity-60' : '' }}">
+    <header class="flex justify-between items-center mb-8 border-b border-gray-700 pb-4 {{ $locked ? 'opacity-60' : '' }}">
         <div>
             <h1 class="text-3xl font-bold {{ $locked ? 'text-gray-500' : 'text-blue-400' }}">
                 {{ $rundown->show->title }}
@@ -70,10 +68,7 @@
             </p>
         </div>
         <div class="flex gap-2 items-center flex-wrap">
-            <a href="/shows/{{ $rundown->show_id }}"
-                class="text-gray-500 hover:text-white transition mr-2">
-                ← Volver
-            </a>
+            <a href="/shows/{{ $rundown->show_id }}" class="text-gray-500 hover:text-white transition mr-2">← Volver</a>
             <a href="/rundown/{{ $rundown->id }}/pdf" target="_blank"
                 class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded text-sm font-bold uppercase transition">
                 📄 Guion PDF
@@ -87,13 +82,9 @@
                 📺 Teleprompter
             </a>
             @if(!$locked)
-            <div class="bg-green-700 px-4 py-2 rounded text-sm font-bold uppercase">
-                🔴 En Producción
-            </div>
+                <div class="bg-green-700 px-4 py-2 rounded text-sm font-bold uppercase">🔴 En Producción</div>
             @else
-            <div class="bg-gray-700 px-4 py-2 rounded text-sm font-bold uppercase text-gray-400">
-                📼 Corrida
-            </div>
+                <div class="bg-gray-700 px-4 py-2 rounded text-sm font-bold uppercase text-gray-400">📼 Corrida</div>
             @endif
         </div>
     </header>
@@ -101,7 +92,7 @@
     {{-- LAYOUT PRINCIPAL --}}
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {{-- COLUMNA IZQUIERDA: Tabla --}}
+        {{-- COLUMNA IZQUIERDA --}}
         <div class="lg:col-span-2 flex flex-col gap-4">
 
             <div id="total-duration"
@@ -149,7 +140,7 @@
             </div>
         </div>
 
-        {{-- COLUMNA DERECHA: Panel de propiedades --}}
+        {{-- COLUMNA DERECHA: Panel --}}
         <div id="editor-container"
              class="bg-gray-800 rounded-lg p-5 shadow-2xl border border-gray-700 self-start sticky top-6 transition-all">
             <div class="flex flex-col items-center justify-center h-64 text-gray-600 italic text-center">
@@ -165,13 +156,63 @@
 
 <script>
     const LOCKED = {{ $locked ? 'true' : 'false' }};
+    const CSRF   = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-    // ── CSRF ──────────────────────────────────────────────────────────────
-    document.body.addEventListener('htmx:configRequest', (event) => {
-        event.detail.headers['X-CSRF-Token'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    // ── CSRF para HTMX ────────────────────────────────────────────────────
+    document.body.addEventListener('htmx:configRequest', (e) => {
+        e.detail.headers['X-CSRF-Token'] = CSRF;
     });
 
-    // ── BANDERAS para foco en nuevo ítem ──────────────────────────────────
+    // ── Helper central: actualizar tabla ─────────────────────────────────
+    function reloadTabla(html, focusSegmentId) {
+        const tbody = document.getElementById('tabla-segmentos');
+        tbody.innerHTML = html;
+        sortableInstance = null;
+        initSortable();
+        htmx.trigger(document.body, 'refreshTime');
+
+        if (selectedSegmentId) {
+            const row = document.getElementById('segment-' + selectedSegmentId);
+            if (row) row.classList.add('segment-selected');
+        }
+
+        if (focusSegmentId) {
+            setTimeout(() => {
+                const row = document.getElementById('segment-' + focusSegmentId);
+                if (row) {
+                    const input = row.querySelector('input.seg-title-input');
+                    if (input) {
+                        input.focus();
+                        input.select();
+                        input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            }, 60);
+        }
+    }
+
+    // ── Insertar ítem entre filas (fetch manual, sin HTMX) ───────────────
+    function insertarItemDespues(segmentId, blockId) {
+        const url = (segmentId == 0)
+            ? `/segment/insert-after/0?block_id=${blockId}`
+            : `/segment/insert-after/${segmentId}`;
+
+        fetch(url, {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': CSRF }
+        })
+        .then(r => {
+            let focusId = null;
+            try {
+                const trigger = r.headers.get('HX-Trigger');
+                if (trigger) focusId = JSON.parse(trigger).focusSegment;
+            } catch(e) {}
+            return r.text().then(html => ({ html, focusId }));
+        })
+        .then(({ html, focusId }) => reloadTabla(html, focusId));
+    }
+
+    // ── Banderas para Nuevo Bloque y + Ítem ──────────────────────────────
     let justAddedItem  = false;
     let addedToBlockId = null;
 
@@ -182,13 +223,47 @@
             const match = btn.getAttribute('hx-post').match(/\/block\/(\d+)\/add-segment/);
             addedToBlockId = match ? match[1] : null;
         }
-        // También detectar insertar-entre-filas
-        const insertBtn = e.target.closest('button[hx-post*="insert-after"]');
-        if (insertBtn) {
-            justAddedItem = true;
-            const row = insertBtn.closest('tr');
-            addedToBlockId = row ? row.dataset.blockId : null;
+    });
+
+    // ── AFTER SWAP — solo para operaciones HTMX normales ─────────────────
+    document.addEventListener('htmx:afterSwap', function(e) {
+        if (e.detail.target.id !== 'tabla-segmentos') return;
+
+        sortableInstance = null;
+        initSortable();
+
+        if (selectedSegmentId) {
+            const row = document.getElementById('segment-' + selectedSegmentId);
+            if (row) row.classList.add('segment-selected');
         }
+
+        if (!justAddedItem) return;
+        justAddedItem = false;
+
+        setTimeout(() => {
+            if (!addedToBlockId) {
+                // Nuevo bloque → título del bloque
+                const blockInputs = document.querySelectorAll('#tabla-segmentos .block-header input[name="title"]');
+                if (blockInputs.length > 0) {
+                    const last = blockInputs[blockInputs.length - 1];
+                    last.focus();
+                    last.select();
+                    last.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                return;
+            }
+            // + Ítem → último ítem del bloque
+            const segRows = document.querySelectorAll(`#tabla-segmentos tr.segment-of-${addedToBlockId}`);
+            if (segRows.length > 0) {
+                const lastInput = segRows[segRows.length - 1].querySelector('input.seg-title-input');
+                if (lastInput) {
+                    lastInput.focus();
+                    lastInput.select();
+                    lastInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+            addedToBlockId = null;
+        }, 80);
     });
 
     // ── SELECCIÓN ─────────────────────────────────────────────────────────
@@ -236,55 +311,14 @@
         `;
     }
 
-    // ── AFTER SWAP ────────────────────────────────────────────────────────
-    document.addEventListener('htmx:afterSwap', function(e) {
-        if (e.detail.target.id !== 'tabla-segmentos') return;
-
-        sortableInstance = null;
-        initSortable();
-
-        if (selectedSegmentId) {
-            const row = document.getElementById('segment-' + selectedSegmentId);
-            if (row) row.classList.add('segment-selected');
-        }
-
-        if (justAddedItem) {
-            justAddedItem = false;
-            setTimeout(() => {
-                if (addedToBlockId) {
-                    const segRows = document.querySelectorAll(
-                        `#tabla-segmentos tr.segment-of-${addedToBlockId}`
-                    );
-                    if (segRows.length > 0) {
-                        const lastInput = segRows[segRows.length - 1].querySelector('input.seg-title-input');
-                        if (lastInput) {
-                            lastInput.focus();
-                            lastInput.select();
-                            lastInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            addedToBlockId = null;
-                            return;
-                        }
-                    }
-                }
-                const blockInputs = document.querySelectorAll('#tabla-segmentos .block-header input[name="title"]');
-                if (blockInputs.length > 0) {
-                    const last = blockInputs[blockInputs.length - 1];
-                    last.focus();
-                    last.select();
-                    last.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            }, 80);
-        }
-    });
-
     // ── COLLAPSE / EXPAND ─────────────────────────────────────────────────
     function toggleBlock(blockId) {
-        const rows = document.querySelectorAll('.segment-of-' + blockId);
+        const rows  = document.querySelectorAll('.segment-of-' + blockId);
         const arrow = document.getElementById('arrow-' + blockId);
         const isOpen = arrow.classList.contains('rotate-90');
         rows.forEach(row => row.style.display = isOpen ? 'none' : '');
         arrow.classList.toggle('rotate-90', !isOpen);
-        arrow.classList.toggle('rotate-0', isOpen);
+        arrow.classList.toggle('rotate-0',  isOpen);
     }
 
     // ── SORTABLE ──────────────────────────────────────────────────────────
@@ -320,17 +354,12 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'X-CSRF-TOKEN': CSRF,
                     },
                     body: JSON.stringify({ blocks: payload })
                 })
                 .then(r => r.text())
-                .then(html => {
-                    tbody.innerHTML = html;
-                    sortableInstance = null;
-                    initSortable();
-                    htmx.trigger(document.body, 'refreshTime');
-                });
+                .then(html => reloadTabla(html, null));
             }
         });
     }

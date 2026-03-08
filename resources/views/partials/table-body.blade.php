@@ -108,9 +108,7 @@
             <td colspan="6" class="p-0">
                 <div class="h-0 group-hover/insert:h-6 overflow-hidden transition-all duration-150 flex items-center justify-center">
                     <button
-                        hx-post="/segment/insert-after/0?block_id={{ $block->id }}"
-                        hx-target="#tabla-segmentos"
-                        hx-swap="innerHTML"
+                        onclick="event.stopPropagation(); insertarItemDespues(0, {{ $block->id }})"
                         class="w-full h-5 flex items-center justify-center gap-1
                                text-[10px] font-bold text-green-400 bg-green-900/20 hover:bg-green-900/40
                                border-y border-dashed border-green-800/40 hover:border-green-600 transition">
@@ -269,9 +267,7 @@
             <td colspan="6" class="p-0">
                 <div class="h-0 group-hover/insert:h-6 overflow-hidden transition-all duration-150 flex items-center justify-center">
                     <button
-                        hx-post="/segment/insert-after/{{ $segment->id }}"
-                        hx-target="#tabla-segmentos"
-                        hx-swap="innerHTML"
+                        onclick="event.stopPropagation(); insertarItemDespues({{ $segment->id }}, {{ $block->id }})"
                         class="w-full h-5 flex items-center justify-center gap-1
                                text-[10px] font-bold text-green-400 bg-green-900/20 hover:bg-green-900/40
                                border-y border-dashed border-green-800/40 hover:border-green-600 transition">
