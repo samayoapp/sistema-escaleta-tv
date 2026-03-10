@@ -122,28 +122,31 @@
         </div>
     @endif
 
-    {{-- NOTAS DE PRODUCCIÓN --}}
+    {{-- NOTAS DE PRODUCCIÓN — botón modal --}}
     <div class="mb-4">
-        <label class="text-[10px] uppercase text-gray-500 font-bold tracking-widest block mb-1">
-            📋 Notas de Producción
-        </label>
         @if($locked)
-            <div class="w-full bg-gray-900/50 border border-gray-700/50 rounded p-3 text-gray-400 text-xs leading-relaxed whitespace-pre-wrap min-h-[4rem]">
-                {{ $segment->production_notes ?: '—' }}
-            </div>
+            @if($segment->production_notes)
+                <div class="w-full bg-gray-900/50 border border-gray-700/50 rounded p-3 text-gray-400 text-xs leading-relaxed whitespace-pre-wrap">
+                    <div class="text-[10px] uppercase text-gray-600 font-bold tracking-widest mb-1">📋 Notas de Producción</div>
+                    {{ $segment->production_notes }}
+                </div>
+            @endif
         @else
-            <div id="notes-indicator" class="text-[10px] text-gray-600 italic mb-1 text-right h-3"></div>
-            <textarea
-                name="production_notes"
-                hx-post="/segment/{{ $segment->id }}/update-notes"
-                hx-trigger="keyup changed delay:600ms"
-                hx-target="#notes-indicator"
-                placeholder="Instrucciones técnicas, menciones, comerciales, etc."
-                class="w-full bg-gray-900 text-gray-300 p-3 rounded border border-gray-700
-                       focus:border-amber-500 outline-none resize-none text-xs leading-relaxed
-                       hover:border-gray-500 transition placeholder-gray-700"
-                rows="4"
-            >{{ $segment->production_notes }}</textarea>
+            <button
+                onclick="abrirModalNotas({{ $segment->id }}, {{ json_encode($segment->production_notes) }})"
+                class="w-full flex items-center justify-between px-3 py-2 rounded border transition text-xs font-bold uppercase tracking-widest
+                    {{ $segment->production_notes
+                        ? 'bg-amber-900/20 border-amber-700/50 text-amber-400 hover:bg-amber-900/40 hover:border-amber-600'
+                        : 'bg-gray-900/50 border-gray-700 border-dashed text-gray-600 hover:text-gray-400 hover:border-gray-500' }}">
+                <span>
+                    {{ $segment->production_notes ? '📋 Editar nota de producción' : '➕ Agregar nota de producción' }}
+                </span>
+                @if($segment->production_notes)
+                    <span class="text-[9px] font-normal normal-case text-amber-600 truncate max-w-[120px] ml-2">
+                        {{ Str::limit($segment->production_notes, 30) }}
+                    </span>
+                @endif
+            </button>
         @endif
     </div>
 
@@ -236,4 +239,110 @@
         </div>
     </div>
 
+
+{{-- ══ MODAL NOTAS DE PRODUCCIÓN ══ --}}
+<div id="modal-notas-prod"
+     class="hidden fixed inset-0 z-50 flex items-center justify-center"
+     onclick="if(event.target===this) cerrarModalNotas()">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+    <div class="relative bg-gray-900 border border-gray-700 rounded-lg shadow-2xl w-full max-w-lg mx-4 z-10">
+        <div class="flex items-center justify-between px-5 py-3 border-b border-gray-700">
+            <div class="flex items-center gap-2">
+                <span class="text-amber-400 text-sm">📋</span>
+                <span class="text-xs font-bold uppercase tracking-widest text-gray-300">Nota de Producción</span>
+                <span id="modal-notas-segnum" class="font-mono text-xs text-amber-400 bg-amber-900/30 px-2 py-0.5 rounded"></span>
+            </div>
+            <button onclick="cerrarModalNotas()" class="text-gray-600 hover:text-white transition text-sm">✕</button>
+        </div>
+        <div class="px-5 py-4">
+            <textarea
+                id="modal-notas-textarea"
+                placeholder="Instrucciones técnicas, menciones, comerciales, links, etc."
+                class="w-full bg-gray-950 text-gray-200 p-3 rounded border border-gray-700
+                       focus:border-amber-500 outline-none resize-none text-sm leading-relaxed
+                       hover:border-gray-600 transition placeholder-gray-700 font-mono"
+                rows="8"
+            ></textarea>
+            <div id="modal-notas-indicator" class="text-[10px] text-gray-600 italic mt-1 text-right h-3"></div>
+        </div>
+        <div class="flex items-center justify-between px-5 py-3 border-t border-gray-700">
+            <button onclick="borrarNota()"
+                class="text-xs text-red-600 hover:text-red-400 transition uppercase tracking-widest font-bold">
+                🗑 Borrar nota
+            </button>
+            <div class="flex gap-2">
+                <button onclick="cerrarModalNotas()"
+                    class="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-widest
+                           bg-gray-800 hover:bg-gray-700 text-gray-400 transition">
+                    Cancelar
+                </button>
+                <button onclick="guardarNota()"
+                    class="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-widest
+                           bg-amber-600 hover:bg-amber-500 text-white transition">
+                    Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    let _notaSegmentId = null;
+
+    window.abrirModalNotas = function(segmentId, contenidoActual) {
+        _notaSegmentId = segmentId;
+        document.getElementById('modal-notas-textarea').value = contenidoActual || '';
+        document.getElementById('modal-notas-indicator').textContent = '';
+        const segNum = document.querySelector('#properties-panel .font-mono.text-blue-400');
+        document.getElementById('modal-notas-segnum').textContent = segNum ? segNum.textContent.trim() : '';
+        document.getElementById('modal-notas-prod').classList.remove('hidden');
+        setTimeout(() => document.getElementById('modal-notas-textarea').focus(), 80);
+    };
+
+    window.cerrarModalNotas = function() {
+        document.getElementById('modal-notas-prod').classList.add('hidden');
+        _notaSegmentId = null;
+    };
+
+    window.guardarNota = async function() {
+        if (!_notaSegmentId) return;
+        const texto = document.getElementById('modal-notas-textarea').value;
+        const ind   = document.getElementById('modal-notas-indicator');
+        ind.textContent = 'Guardando...';
+        ind.className   = 'text-[10px] text-gray-500 italic mt-1 text-right h-3';
+        const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const res  = await fetch(`/segment/${_notaSegmentId}/update-notes`, {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': csrf, 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `production_notes=${encodeURIComponent(texto)}`
+        });
+        if (res.ok) {
+            ind.textContent = '✓ Guardado';
+            ind.className   = 'text-[10px] text-green-500 font-bold mt-1 text-right h-3';
+            setTimeout(() => {
+                htmx.ajax('GET', `/segment/${_notaSegmentId}/edit`, {
+                    target: '#editor-container',
+                    swap: 'innerHTML'
+                });
+                cerrarModalNotas();
+            }, 600);
+        } else {
+            ind.textContent = '✗ Error al guardar';
+            ind.className   = 'text-[10px] text-red-500 font-bold mt-1 text-right h-3';
+        }
+    };
+
+    window.borrarNota = async function() {
+        if (!_notaSegmentId) return;
+        if (!confirm('¿Borrar la nota de producción de este ítem?')) return;
+        document.getElementById('modal-notas-textarea').value = '';
+        await guardarNota();
+    };
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') cerrarModalNotas();
+    });
+})();
+</script>
 </div>
