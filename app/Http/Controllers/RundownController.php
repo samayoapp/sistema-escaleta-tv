@@ -79,6 +79,13 @@ public function editSegment($id)
         return '<span class="text-green-400 font-bold">✓ Guardado (' . now()->format('H:i:s') . ')</span>';
     }
 
+    public function updateNotes(Request $request, $id)
+    {
+        $segment = Segment::findOrFail($id);
+        $segment->update(['production_notes' => $request->production_notes]);
+        return '<span class="text-green-400 font-bold">✓ Guardado (' . now()->format('H:i:s') . ')</span>';
+    }
+
     public function updateField(Request $request, $id)
     {
         $segment = Segment::findOrFail($id);
@@ -198,6 +205,21 @@ public function editSegment($id)
 
     // ─── PDF ──────────────────────────────────────────────────────────────────
 
+    /**
+     * Convierte URLs en texto plano a <a href> clicables para DomPDF.
+     */
+    public static function linkify(?string $text): string
+    {
+        if (!$text) return '';
+        $escaped = e($text);
+        $pattern = '~(https?://[^\s<>"\']+)~i';
+        return preg_replace(
+            $pattern,
+            '<a href="$1" style="color:#2563eb;text-decoration:underline;">$1</a>',
+            $escaped
+        );
+    }
+
     public function generatePdf($id)
     {
         $rundown = Rundown::with([
@@ -211,7 +233,7 @@ public function editSegment($id)
 
         $filename = 'guion-' . str($rundown->show->title)->slug() . '-' . $rundown->air_date . '.pdf';
 
-        return $pdf->download($filename);
+        return $pdf->stream($filename);
     }
 
     public function generatePdfEscaleta($id)
@@ -227,7 +249,7 @@ public function editSegment($id)
 
         $filename = 'escaleta-' . str($rundown->show->title)->slug() . '-' . $rundown->air_date . '.pdf';
 
-        return $pdf->download($filename);
+        return $pdf->stream($filename);
     }
 
     public function toggleScript($id)

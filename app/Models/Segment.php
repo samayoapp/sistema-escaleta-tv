@@ -8,15 +8,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Segment extends Model
 {
     protected $fillable = [
-    'rundown_id', 
-    'block_id', 
-    'order_index',
-    'title', 
-    'duration_seconds', 
-    'type',
-    'script_content', 
-    'has_script',
-    'in_prompter'
+        'rundown_id',
+        'block_id',
+        'order_index',
+        'title',
+        'duration_seconds',
+        'type',
+        'script_content',
+        'production_notes',
+        'has_script',
+        'in_prompter'
     ];
 
 // Quita 'block_name' — ya no existe

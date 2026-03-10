@@ -82,4 +82,8 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('role:admin');
     Route::delete('/admin/usuarios/{id}',   [UserController::class, 'destroy'])
         ->middleware('role:admin');
+
+
+    Route::post('/segment/{id}/update-notes', [RundownController::class, 'updateNotes'])
+        ->middleware('role:admin,editor');
 });

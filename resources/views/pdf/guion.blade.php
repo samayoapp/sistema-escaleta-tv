@@ -6,35 +6,28 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         @page {
-            margin: 3cm 3cm 3cm 3cm;
             size: letter portrait;
+            margin: 2cm 2cm 2cm 2cm;
         }
 
         body {
             font-family: 'DejaVu Sans', sans-serif;
             font-size: 10pt;
             color: #1a1a1a;
-            line-height: 1.6;
+            line-height: 1.4;
             background: white;
-            margin: 0;
-            padding: 0;
-        }
-
-        /* Contenedor principal con márgenes generosos */
-        .contenido {
-            padding: 60px 80px;
         }
 
         /* ── HEADER FIJO ── */
         .page-header {
             position: fixed;
-            top: 0; left: 0; right: 0;
-            padding: 16px 80px 10px;
+            top: -1.5cm;
+            left: 0; right: 0;
+            padding-bottom: 6px;
             border-bottom: 1.5px solid #cbd5e1;
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
-            background: white;
         }
         .page-header .show-name {
             font-size: 8pt;
@@ -44,7 +37,7 @@
             letter-spacing: 1.5px;
         }
         .page-header .show-date {
-            font-size: 7.5pt;
+            font-size: 7pt;
             color: #94a3b8;
             margin-top: 2px;
         }
@@ -58,119 +51,127 @@
         /* ── FOOTER FIJO ── */
         .page-footer {
             position: fixed;
-            bottom: 0; left: 0; right: 0;
-            padding: 8px 80px 14px;
+            bottom: -1.5cm;
+            left: 0; right: 0;
+            padding-top: 5px;
             border-top: 1px solid #e2e8f0;
             text-align: center;
-            font-size: 7pt;
+            font-size: 6.5pt;
             color: #cbd5e1;
             letter-spacing: 1px;
             text-transform: uppercase;
-            background: white;
         }
 
-        /* ── PORTADA ── */
-        .portada {
-            text-align: center;
-            padding: 80px 40px 70px;
-            page-break-after: always;
+        /* ── TÍTULO PRIMERA PÁGINA ── */
+        .titulo-pagina {
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #334155;
         }
-        .portada .label {
-            font-size: 8pt;
+        .titulo-pagina .doc-label {
+            font-size: 7.5pt;
             color: #94a3b8;
             text-transform: uppercase;
-            letter-spacing: 4px;
-            margin-bottom: 24px;
+            letter-spacing: 3px;
+            margin-bottom: 6px;
         }
-        .portada h1 {
-            font-size: 26pt;
+        .titulo-pagina h1 {
+            font-size: 20pt;
             font-weight: bold;
             color: #334155;
             text-transform: uppercase;
             letter-spacing: 2px;
-            margin-bottom: 20px;
-            line-height: 1.2;
-        }
-        .portada .linea {
-            width: 60px;
-            height: 3px;
-            background: #3b82f6;
-            margin: 0 auto 26px;
-        }
-        .portada .meta {
-            font-size: 10.5pt;
-            color: #64748b;
+            line-height: 1.1;
             margin-bottom: 8px;
         }
-        .portada .duracion-badge {
-            display: inline-block;
-            margin-top: 30px;
-            border: 1.5px solid #bfdbfe;
-            color: #3b82f6;
-            font-size: 10pt;
+        .titulo-pagina .linea {
+            width: 40px;
+            height: 3px;
+            background: #3b82f6;
+            margin-bottom: 10px;
+        }
+        .titulo-pagina .meta-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .titulo-pagina .meta-text {
+            font-size: 9pt;
+            color: #64748b;
+        }
+        .titulo-pagina .duracion-badge {
+            font-size: 8pt;
             font-weight: bold;
-            padding: 8px 26px;
-            letter-spacing: 1px;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+            background: #eff6ff;
+            padding: 3px 12px;
+            letter-spacing: 0.5px;
         }
 
         /* ── CABECERA DE BLOQUE ── */
-        .bloque {
-            margin-bottom: 10px;
-        }
         .bloque-header {
-            margin-top: 40px;
-            margin-bottom: 20px;
-            padding: 10px 16px;
+            margin-top: 28px;
+            margin-bottom: 12px;
+            padding: 7px 12px;
             background-color: #334155;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             page-break-after: avoid;
         }
         .bloque-codigo {
-            font-size: 8.5pt;
+            font-size: 9pt;
             font-weight: bold;
             color: #93c5fd;
-            background: rgba(255,255,255,0.08);
-            padding: 2px 9px;
+            background: rgba(255,255,255,0.1);
+            padding: 1px 8px;
             letter-spacing: 1px;
+            font-family: 'DejaVu Sans Mono', monospace;
         }
         .bloque-titulo {
-            font-size: 10pt;
+            font-size: 9pt;
             font-weight: bold;
             color: #e2e8f0;
             text-transform: uppercase;
             letter-spacing: 1.5px;
             flex: 1;
         }
+        .bloque-subtitulo {
+            font-size: 8pt;
+            color: #93c5fd;
+            font-weight: normal;
+        }
         .bloque-duracion {
             font-size: 7.5pt;
             color: #94a3b8;
+            white-space: nowrap;
         }
 
         /* ── SEGMENTO ── */
         .segmento {
-            margin-bottom: 28px;
+            margin-bottom: 20px;
             page-break-inside: avoid;
         }
         .segmento-cabecera {
             display: flex;
             align-items: baseline;
-            gap: 10px;
-            margin-bottom: 10px;
-            padding-bottom: 6px;
+            gap: 8px;
+            margin-bottom: 8px;
+            padding-bottom: 5px;
             border-bottom: 1px solid #e2e8f0;
         }
         .seg-codigo {
-            font-size: 8pt;
+            font-size: 7.5pt;
             font-weight: bold;
             color: #3b82f6;
             background: #eff6ff;
-            padding: 1px 8px;
+            padding: 1px 7px;
             white-space: nowrap;
+            font-family: 'DejaVu Sans Mono', monospace;
         }
         .seg-titulo {
-            font-size: 10.5pt;
+            font-size: 10pt;
             font-weight: bold;
             color: #475569;
             text-transform: uppercase;
@@ -178,14 +179,14 @@
             flex: 1;
         }
         .seg-tipo {
-            font-size: 7pt;
+            font-size: 6.5pt;
             font-weight: bold;
             text-transform: uppercase;
-            padding: 1px 7px;
+            padding: 1px 6px;
             white-space: nowrap;
         }
         .seg-duracion {
-            font-size: 7.5pt;
+            font-size: 7pt;
             color: #94a3b8;
             white-space: nowrap;
         }
@@ -200,35 +201,35 @@
 
         /* ── GUION LITERARIO ── */
         .guion-wrapper {
-            margin-left: 40px;
-            padding-left: 18px;
+            margin-left: 32px;
+            padding-left: 14px;
             border-left: 2px solid #e2e8f0;
         }
         .guion {
             font-family: 'DejaVu Serif', Georgia, serif;
-            font-size: 11.5pt;
-            line-height: 2;
+            font-size: 11pt;
+            line-height: 1.45;
             color: #0f172a;
             white-space: pre-wrap;
             word-wrap: break-word;
         }
         .sin-guion {
-            font-size: 8.5pt;
+            font-size: 8pt;
             color: #cbd5e1;
             font-style: italic;
-            margin-left: 40px;
-            padding: 4px 0;
+            margin-left: 32px;
+            padding: 2px 0;
         }
 
         /* ── CORTE COMERCIAL ── */
         .corte-comercial {
             text-align: center;
-            margin: 24px 0;
-            padding: 10px 16px;
+            margin: 16px 0;
+            padding: 8px 14px;
             border-top: 1px dashed #f59e0b;
             border-bottom: 1px dashed #f59e0b;
             color: #92400e;
-            font-size: 8pt;
+            font-size: 7.5pt;
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 2.5px;
@@ -238,11 +239,11 @@
         /* ── FIN ── */
         .fin {
             text-align: center;
-            margin-top: 60px;
-            padding: 20px;
+            margin-top: 40px;
+            padding: 14px;
             border-top: 1.5px solid #cbd5e1;
             color: #94a3b8;
-            font-size: 8pt;
+            font-size: 7.5pt;
             letter-spacing: 2px;
             text-transform: uppercase;
         }
@@ -280,74 +281,82 @@
     {{ $rundown->show->title }} &nbsp;·&nbsp; {{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }} &nbsp;·&nbsp; Uso Interno
 </div>
 
-{{-- CONTENIDO --}}
-<div class="contenido">
+{{-- TÍTULO PRIMERA PÁGINA (sin portada) --}}
+<div class="titulo-pagina">
+    <div class="doc-label">Guion Literario</div>
+    <h1>{{ $rundown->show->title }}</h1>
+    <div class="linea"></div>
+    <div class="meta-row">
+        <div class="meta-text">
+            {{ \Carbon\Carbon::parse($rundown->air_date)->isoFormat('dddd D [de] MMMM [de] YYYY') }}
+            &nbsp;·&nbsp; Estado: {{ ucfirst($rundown->status) }}
+        </div>
+        <span class="duracion-badge">Duración estimada: {{ $totalMin }} min {{ $totalSeg }} seg</span>
+    </div>
+</div>
 
-    {{-- PORTADA --}}
-    <div class="portada">
-        <div class="label">Guion Literario</div>
-        <h1>{{ $rundown->show->title }}</h1>
-        <div class="linea"></div>
-        <div class="meta">Fecha de emisión: {{ \Carbon\Carbon::parse($rundown->air_date)->format('d \d\e F \d\e Y') }}</div>
-        <div class="meta">Estado: {{ ucfirst($rundown->status) }}</div>
-        <div class="duracion-badge">Duración estimada: {{ $totalMin }} min {{ $totalSeg }} seg</div>
+{{-- BLOQUES --}}
+@foreach($rundown->blocks->sortBy('order_index') as $blockIndex => $block)
+@php
+    $blockLetra = chr(65 + $blockIndex);
+    $blockNum   = $blockIndex + 1;
+@endphp
+
+    <div class="bloque-header">
+        <span class="bloque-codigo">{{ $blockLetra }}</span>
+        <span class="bloque-titulo">
+            BLOQUE {{ $blockLetra }}
+            @if($block->title)
+                <span class="bloque-subtitulo">— {{ $block->title }}</span>
+            @endif
+        </span>
+        <span class="bloque-duracion">
+            {{ floor($block->segments->sum('duration_seconds') / 60) }}m
+            {{ $block->segments->sum('duration_seconds') % 60 }}s
+        </span>
     </div>
 
-    {{-- BLOQUES --}}
-    @foreach($rundown->blocks->sortBy('order_index') as $blockIndex => $block)
-    @php $blockNum = $blockIndex + 1; @endphp
+    @foreach($block->segments->sortBy('order_index') as $segIndex => $segment)
+    @php $segNum = $blockLetra . '.' . ($segIndex + 1); @endphp
 
-        <div class="bloque">
-
-            <div class="bloque-header">
-                <span class="bloque-codigo">B{{ $blockNum }}</span>
-                <span class="bloque-titulo">{{ $block->title }}</span>
-                <span class="bloque-duracion">
-                    {{ floor($block->segments->sum('duration_seconds') / 60) }}m
-                    {{ $block->segments->sum('duration_seconds') % 60 }}s
-                </span>
+        @if($segment->type === 'CORTE_COMERCIAL')
+            <div class="corte-comercial">
+                ── {{ $segNum }} &nbsp;·&nbsp; {{ $segment->title }} ──
             </div>
+            @if($segment->script_content)
+                <div class="guion-wrapper" style="margin-bottom:14px">
+                    <div class="guion">{{ $segment->script_content }}</div>
+                </div>
+            @endif
+        @else
+            <div class="segmento">
+                <div class="segmento-cabecera">
+                    <span class="seg-codigo">{{ $segNum }}</span>
+                    <span class="seg-titulo">{{ $segment->title }}</span>
+                    <span class="seg-tipo tipo-{{ $segment->type }}">
+                        {{ $typeLabels[$segment->type] ?? $segment->type }}
+                    </span>
+                    <span class="seg-duracion">
+                        {{ floor($segment->duration_seconds / 60) }}m {{ $segment->duration_seconds % 60 }}s
+                    </span>
+                </div>
 
-            @foreach($block->segments->sortBy('order_index') as $segIndex => $segment)
-            @php $segNum = "B{$blockNum}." . ($segIndex + 1); @endphp
-
-                @if($segment->type === 'CORTE_COMERCIAL')
-                    <div class="corte-comercial">
-                        ── {{ $segNum }} &nbsp;·&nbsp; {{ $segment->title }} ──
+                @if($segment->script_content)
+                    <div class="guion-wrapper">
+                        <div class="guion">{{ $segment->script_content }}</div>
                     </div>
                 @else
-                    <div class="segmento">
-                        <div class="segmento-cabecera">
-                            <span class="seg-codigo">{{ $segNum }}</span>
-                            <span class="seg-titulo">{{ $segment->title }}</span>
-                            <span class="seg-tipo tipo-{{ $segment->type }}">
-                                {{ $typeLabels[$segment->type] ?? $segment->type }}
-                            </span>
-                            <span class="seg-duracion">
-                                {{ floor($segment->duration_seconds / 60) }}m {{ $segment->duration_seconds % 60 }}s
-                            </span>
-                        </div>
-
-                        @if($segment->script_content)
-                            <div class="guion-wrapper">
-                                <div class="guion">{{ $segment->script_content }}</div>
-                            </div>
-                        @else
-                            <div class="sin-guion">— Sin guion literario —</div>
-                        @endif
-                    </div>
+                    <div class="sin-guion">— Sin guion literario —</div>
                 @endif
-
-            @endforeach
-
-        </div>
+            </div>
+        @endif
 
     @endforeach
 
-    <div class="fin">
-        ★ &nbsp; Fin del Guion &nbsp;·&nbsp; {{ $rundown->show->title }} &nbsp;·&nbsp; {{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }} &nbsp; ★
-    </div>
+@endforeach
 
+<div class="fin">
+    ★ &nbsp; Fin del Guion &nbsp;·&nbsp; {{ $rundown->show->title }} &nbsp;·&nbsp; {{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }} &nbsp; ★
 </div>
 
 </body>

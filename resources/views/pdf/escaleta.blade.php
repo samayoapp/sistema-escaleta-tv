@@ -6,8 +6,11 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         @page {
-            size: letter landscape;
-            margin: 1.8cm 2cm 2cm 2cm;
+            size: 11in 8.5in;
+            margin-top: 2.2cm;
+            margin-bottom: 1.8cm;
+            margin-left: 2cm;
+            margin-right: 2cm;
         }
 
         body {
@@ -17,174 +20,131 @@
             background: white;
         }
 
-        /* ── HEADER FIJO ── */
+        /* ══ HEADER FIJO ══ */
         .page-header {
             position: fixed;
-            top: -1.4cm;
+            top: -1.8cm;
             left: 0; right: 0;
-            padding-bottom: 6px;
             border-bottom: 2px solid #1e3a5f;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
+            padding-bottom: 5px;
         }
-        .page-header .show-name {
-            font-size: 10pt;
-            font-weight: bold;
-            color: #1e3a5f;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
+        .page-header table { width: 100%; border-collapse: collapse; }
+        .page-header td    { border: none; padding: 0; vertical-align: bottom; }
+        .hdr-show {
+            font-size: 9.5pt; font-weight: bold;
+            color: #1e3a5f; text-transform: uppercase; letter-spacing: 2px;
         }
-        .page-header .meta {
-            font-size: 7.5pt;
-            color: #64748b;
-            margin-top: 2px;
+        .hdr-meta { font-size: 7pt; color: #64748b; margin-top: 2px; }
+        .hdr-label {
+            font-size: 7.5pt; font-weight: bold; color: #64748b;
+            text-transform: uppercase; letter-spacing: 1px; text-align: right;
         }
-        .page-header .right {
-            text-align: right;
-        }
-        .page-header .label {
-            font-size: 8pt;
-            font-weight: bold;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+        .hdr-sub { font-size: 7pt; color: #94a3b8; text-align: right; margin-top: 2px; }
 
-        /* ── FOOTER FIJO ── */
+        /* ══ FOOTER FIJO ══ */
         .page-footer {
             position: fixed;
-            bottom: -1.5cm;
+            bottom: -1.4cm;
             left: 0; right: 0;
-            padding-top: 5px;
             border-top: 1px solid #e2e8f0;
-            display: flex;
-            justify-content: space-between;
-            font-size: 7pt;
-            color: #94a3b8;
-            letter-spacing: 0.5px;
+            padding-top: 4px;
+        }
+        .page-footer table { width: 100%; border-collapse: collapse; }
+        .page-footer td    { border: none; padding: 0; font-size: 6.5pt; color: #94a3b8; }
+        .ft-right { text-align: right; }
+
+        /* ══ ENCABEZADO PRIMERA PÁGINA — fondo blanco ══ */
+        .enc-top {
+            border-top: 4px solid #1e3a5f;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 10px 0 8px 0;
+            margin-bottom: 0;
+        }
+        .enc-top table { width: 100%; border-collapse: collapse; }
+        .enc-top td    { border: none; padding: 0; vertical-align: middle; }
+        .enc-show {
+            font-size: 17pt; font-weight: bold; color: #1e3a5f;
+            text-transform: uppercase; letter-spacing: 2px; line-height: 1.1;
+        }
+        .enc-canal {
+            font-size: 7.5pt; color: #64748b;
+            text-transform: uppercase; letter-spacing: 2px; margin-top: 3px;
+        }
+        .enc-doc-label {
+            font-size: 6.5pt; color: #94a3b8;
+            text-transform: uppercase; letter-spacing: 2px;
+            margin-bottom: 3px; text-align: right;
+        }
+        .enc-fecha {
+            font-size: 12pt; font-weight: bold;
+            color: #334155; text-align: right;
         }
 
-        /* ── PORTADA ── */
-        .portada {
-            text-align: center;
-            padding: 50px 20px 40px;
-            page-break-after: always;
+        .enc-datos {
+            background: #f8fafc;
+            border-left: 4px solid #1e3a5f;
+            border-bottom: 2px solid #e2e8f0;
+            padding: 5px 14px;
+            margin-bottom: 14px;
         }
-        .portada .label {
-            font-size: 8pt;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 4px;
-            margin-bottom: 16px;
+        .enc-datos table { width: 100%; border-collapse: collapse; }
+        .enc-datos td    { border: none; padding: 2px 20px 2px 0; vertical-align: middle; }
+        .dato-lbl {
+            font-size: 6pt; color: #94a3b8;
+            text-transform: uppercase; letter-spacing: 1px;
         }
-        .portada h1 {
-            font-size: 24pt;
-            font-weight: bold;
-            color: #1e3a5f;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 16px;
-        }
-        .portada .linea {
-            width: 60px;
-            height: 3px;
-            background: #3b82f6;
-            margin: 0 auto 20px;
-        }
-        .portada .meta {
-            font-size: 10pt;
-            color: #64748b;
-            margin-bottom: 6px;
-        }
-        .portada .badge {
-            display: inline-block;
-            margin-top: 20px;
-            border: 1.5px solid #bfdbfe;
-            color: #3b82f6;
-            font-size: 10pt;
-            font-weight: bold;
-            padding: 6px 20px;
-            letter-spacing: 1px;
+        .dato-val {
+            font-size: 9pt; font-weight: bold;
+            color: #1e3a5f; font-family: 'DejaVu Sans Mono', monospace;
         }
 
-        /* ── TABLA PRINCIPAL ── */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-        }
+        /* ══ TABLA PRINCIPAL ══ */
+        .tbl { width: 100%; border-collapse: collapse; table-layout: fixed; }
 
-        /* Anchos de columnas */
-        .col-codigo   { width: 7%; }
-        .col-titulo   { width: 38%; }
-        .col-tipo     { width: 13%; }
-        .col-duracion { width: 12%; }
-        .col-horaaire { width: 14%; }
-        .col-notas    { width: 16%; }
+        /* TIPO va primero, luego título */
+        .col-cod  { width: 6%; }
+        .col-tipo { width: 11%; }
+        .col-tit  { width: 37%; }
+        .col-dur  { width: 10%; }
+        .col-aire { width: 12%; }
+        .col-not  { width: 24%; }
 
-        /* ── CABECERA DE TABLA ── */
-        thead tr th {
-            background-color: #1e3a5f;
-            color: white;
-            font-size: 7.5pt;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            padding: 7px 8px;
-            text-align: left;
+        .tbl thead th {
+            background: #1e3a5f; color: #e2e8f0;
+            font-size: 7pt; font-weight: bold;
+            text-transform: uppercase; letter-spacing: 1px;
+            padding: 6px 8px; text-align: left;
             border: 1px solid #162d47;
         }
-        thead tr th.text-center { text-align: center; }
+        .tbl thead th.tc { text-align: center; }
 
-        /* ── FILA SEPARADORA DE BLOQUE ── */
-        .fila-bloque td {
-            background-color: #334155;
-            color: white;
-            font-size: 8.5pt;
-            font-weight: bold;
-            padding: 6px 10px;
-            border: 1px solid #1e293b;
-        }
-        .fila-bloque .bloque-codigo {
-            font-family: 'DejaVu Sans Mono', monospace;
-            color: #93c5fd;
-            background: rgba(255,255,255,0.08);
-            padding: 1px 7px;
-            font-size: 8pt;
-        }
-        .fila-bloque .bloque-titulo {
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .fila-bloque .bloque-duracion {
-            text-align: right;
-            color: #93c5fd;
-            font-family: 'DejaVu Sans Mono', monospace;
-            font-size: 8pt;
-        }
-        .fila-bloque .bloque-hora {
-            text-align: center;
-            color: #fcd34d;
-            font-family: 'DejaVu Sans Mono', monospace;
-            font-size: 8pt;
-        }
-
-        /* ── FILAS DE SEGMENTO ── */
-        tbody tr.seg-row td {
-            padding: 6px 8px;
-            border: 1px solid #e2e8f0;
+        /* Fila bloque */
+        .fila-blq td {
+            background: #334155; color: #e2e8f0;
+            font-size: 8pt; font-weight: bold;
+            padding: 6px 8px; border: 1px solid #1e293b;
             vertical-align: middle;
-            font-size: 8.5pt;
         }
-        tbody tr.seg-row:nth-child(even) td {
-            background-color: #f8fafc;
+        .blq-letra {
+            font-family: 'DejaVu Sans Mono', monospace;
+            font-size: 10pt; font-weight: bold;
+            color: #fff; background: #1e3a5f;
+            padding: 1px 8px;
         }
-        tbody tr.seg-row:nth-child(odd) td {
-            background-color: #ffffff;
-        }
+        .blq-nom  { text-transform: uppercase; letter-spacing: 1.5px; }
+        .blq-sub  { color: #93c5fd; font-weight: normal; font-size: 7.5pt; }
+        .blq-hora { text-align: center; color: #fcd34d; font-family: 'DejaVu Sans Mono', monospace; }
+        .blq-dur  { text-align: right;  color: #93c5fd; font-family: 'DejaVu Sans Mono', monospace; }
 
-        /* Colores borde izquierdo por tipo */
+        /* Filas segmento */
+        .seg-r td {
+            padding: 5px 8px; border: 1px solid #e2e8f0;
+            vertical-align: middle; font-size: 8.5pt;
+        }
+        .seg-r.par   td { background: #f8fafc; }
+        .seg-r.impar td { background: #ffffff; }
+
+        /* Borde izquierdo — ahora en primera celda (código) */
         .seg-VIVO            td:first-child { border-left: 4px solid #ef4444; }
         .seg-VTR             td:first-child { border-left: 4px solid #22c55e; }
         .seg-OFF             td:first-child { border-left: 4px solid #a855f7; }
@@ -193,99 +153,54 @@
         .seg-PRESENTACION    td:first-child { border-left: 4px solid #3b82f6; }
         .seg-CIERRE          td:first-child { border-left: 4px solid #f97316; }
 
-        .td-codigo {
+        .td-cod {
             font-family: 'DejaVu Sans Mono', monospace;
-            font-weight: bold;
-            color: #3b82f6;
-            font-size: 8pt;
-            text-align: center;
+            font-weight: bold; color: #3b82f6; font-size: 8pt; text-align: center;
         }
-        .td-titulo {
-            font-weight: bold;
-            color: #1e293b;
-        }
-        .td-tipo {
-            text-align: center;
-            font-size: 7.5pt;
-            font-weight: bold;
-            text-transform: uppercase;
-            padding: 3px 5px;
-            border-radius: 2px;
-        }
-        .td-duracion {
-            font-family: 'DejaVu Sans Mono', monospace;
-            text-align: center;
-            color: #475569;
-            font-size: 8.5pt;
-        }
+        .td-tipo { text-align: center; }
+        .td-tit  { font-weight: bold; color: #1e293b; }
+        .td-dur  { font-family: 'DejaVu Sans Mono', monospace; text-align: center; color: #475569; }
         .td-hora {
             font-family: 'DejaVu Sans Mono', monospace;
-            text-align: center;
-            font-weight: bold;
-            color: #b45309;
-            font-size: 8.5pt;
-            background: #fffbeb !important;
+            text-align: center; font-weight: bold;
+            color: #b45309; background: #fffbeb !important;
         }
-        .td-notas {
-            color: #94a3b8;
-            font-size: 7.5pt;
-            font-style: italic;
+        .td-not  { color: #94a3b8; font-size: 7.5pt; font-style: italic; }
+
+        .badge {
+            font-size: 7pt; font-weight: bold;
+            text-transform: uppercase; padding: 2px 5px;
         }
+        .badge-VIVO            { background:#fee2e2; color:#b91c1c; }
+        .badge-VTR             { background:#dcfce7; color:#15803d; }
+        .badge-OFF             { background:#f3e8ff; color:#7e22ce; }
+        .badge-CORTE_COMERCIAL { background:#fef9c3; color:#854d0e; }
+        .badge-NOTA_SECA       { background:#f1f5f9; color:#475569; }
+        .badge-PRESENTACION    { background:#dbeafe; color:#1d4ed8; }
+        .badge-CIERRE          { background:#ffedd5; color:#c2410c; }
 
-        /* Badges de tipo */
-        .badge-VIVO            { background: #fee2e2; color: #b91c1c; }
-        .badge-VTR             { background: #dcfce7; color: #15803d; }
-        .badge-OFF             { background: #f3e8ff; color: #7e22ce; }
-        .badge-CORTE_COMERCIAL { background: #fef9c3; color: #854d0e; }
-        .badge-NOTA_SECA       { background: #f1f5f9; color: #475569; }
-        .badge-PRESENTACION    { background: #dbeafe; color: #1d4ed8; }
-        .badge-CIERRE          { background: #ffedd5; color: #c2410c; }
-
-        /* ── FILA CORTE COMERCIAL ESPECIAL ── */
-        .fila-comercial td {
+        .fila-com td {
             background: #fffbeb !important;
             border-top: 1px dashed #f59e0b !important;
             border-bottom: 1px dashed #f59e0b !important;
-            color: #92400e;
-            font-weight: bold;
-            text-align: center;
-            font-size: 8pt;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
+            color: #92400e; font-weight: bold;
+            text-align: center; font-size: 8pt;
+            letter-spacing: 1.5px; text-transform: uppercase;
         }
 
-        /* ── FILA TOTALES ── */
-        .fila-total td {
+        .fila-tot td {
             background: #f1f5f9;
             border-top: 2px solid #334155;
-            padding: 7px 8px;
-            font-weight: bold;
-            font-size: 8.5pt;
-            color: #1e293b;
+            padding: 7px 8px; font-weight: bold; color: #1e293b;
         }
-        .fila-total .total-label {
-            text-align: right;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #64748b;
-        }
-        .fila-total .total-valor {
-            font-family: 'DejaVu Sans Mono', monospace;
-            text-align: center;
-            color: #1e3a5f;
-        }
-        .fila-total .total-fin {
-            font-family: 'DejaVu Sans Mono', monospace;
-            text-align: center;
-            color: #b45309;
-            background: #fffbeb;
-        }
+        .tot-lbl  { text-align: right; color: #64748b; font-size: 7.5pt; text-transform: uppercase; letter-spacing: 1px; }
+        .tot-val  { font-family: 'DejaVu Sans Mono', monospace; text-align: center; color: #1e3a5f; font-size: 10pt; }
+        .tot-fin  { font-family: 'DejaVu Sans Mono', monospace; text-align: center; color: #b45309; font-size: 10pt; background: #fffbeb; }
     </style>
 </head>
 <body>
 
 @php
-    // Calcular tiempo acumulado
     $airTimeParts = explode(':', $rundown->air_time ?? '19:00:00');
     $acumulado    = ((int)$airTimeParts[0] * 3600) + ((int)$airTimeParts[1] * 60) + ((int)($airTimeParts[2] ?? 0));
     $totalSeconds = $rundown->blocks->flatMap->segments->sum('duration_seconds');
@@ -314,107 +229,145 @@
 
 {{-- HEADER FIJO --}}
 <div class="page-header">
-    <div>
-        <div class="show-name">{{ $rundown->show->title }}</div>
-        <div class="meta">
-            Emisión: {{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}
-            &nbsp;·&nbsp;
-            Inicio: {{ escFmtHora($acumulado) }}
-        </div>
-    </div>
-    <div class="right">
-        <div class="label">Escaleta de Producción</div>
-        <div class="meta">Duración total: {{ $totalMin }}m {{ $totalSeg }}s &nbsp;·&nbsp; Fin estimado: {{ escFmtHora($horaFin) }}</div>
-    </div>
+    <table><tr>
+        <td style="width:60%">
+            <div class="hdr-show">{{ $rundown->show->title }}</div>
+            <div class="hdr-meta">
+                Emisión: {{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}
+                &nbsp;|&nbsp; Inicio: {{ escFmtHora($acumulado) }}
+                &nbsp;|&nbsp; Fin est.: {{ escFmtHora($horaFin) }}
+            </div>
+        </td>
+        <td style="width:40%">
+            <div class="hdr-label">Escaleta de Producción</div>
+            <div class="hdr-sub">Duración total: {{ $totalMin }}m {{ $totalSeg }}s</div>
+        </td>
+    </tr></table>
 </div>
 
 {{-- FOOTER FIJO --}}
 <div class="page-footer">
-    <span>{{ strtoupper($rundown->show->title) }} · {{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}</span>
-    <span>USO INTERNO — PRODUCCIÓN</span>
+    <table><tr>
+        <td>{{ strtoupper($rundown->show->title) }} &nbsp;·&nbsp; {{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}</td>
+        <td class="ft-right">USO INTERNO — PRODUCCIÓN</td>
+    </tr></table>
 </div>
 
-{{-- PORTADA --}}
-<div class="portada">
-    <div class="label">Escaleta de Producción</div>
-    <h1>{{ $rundown->show->title }}</h1>
-    <div class="linea"></div>
-    <div class="meta">Fecha de emisión: {{ \Carbon\Carbon::parse($rundown->air_date)->format('d \d\e F \d\e Y') }}</div>
-    <div class="meta">Hora de inicio: {{ escFmtHora($acumulado) }} &nbsp;·&nbsp; Fin estimado: {{ escFmtHora($horaFin) }}</div>
-    <div class="badge">Duración total: {{ $totalMin }} min {{ $totalSeg }} seg</div>
+{{-- ENCABEZADO PRIMERA PÁGINA --}}
+<div class="enc-top">
+    <table><tr>
+        <td style="width:65%">
+            <div class="enc-show">{{ $rundown->show->title }}</div>
+            @if($rundown->show->channel)
+                <div class="enc-canal">{{ $rundown->show->channel }}</div>
+            @endif
+        </td>
+        <td style="width:35%">
+            <div class="enc-doc-label">Escaleta de Producción</div>
+            <div class="enc-fecha">{{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}</div>
+        </td>
+    </tr></table>
+</div>
+<div class="enc-datos">
+    <table><tr>
+        <td>
+            <div class="dato-lbl">Hora de Inicio</div>
+            <div class="dato-val">{{ escFmtHora($acumulado) }}</div>
+        </td>
+        <td>
+            <div class="dato-lbl">Fin Estimado</div>
+            <div class="dato-val">{{ escFmtHora($horaFin) }}</div>
+        </td>
+        <td>
+            <div class="dato-lbl">Duración Total</div>
+            <div class="dato-val">{{ $totalMin }}m {{ $totalSeg }}s</div>
+        </td>
+        <td>
+            <div class="dato-lbl">Bloques</div>
+            <div class="dato-val">{{ $rundown->blocks->count() }}</div>
+        </td>
+        <td>
+            <div class="dato-lbl">Ítems</div>
+            <div class="dato-val">{{ $rundown->blocks->flatMap->segments->count() }}</div>
+        </td>
+    </tr></table>
 </div>
 
-{{-- TABLA --}}
-<table>
+{{-- TABLA — orden columnas: Código | Tipo | Título | Duración | Al Aire | Notas --}}
+<table class="tbl">
     <thead>
         <tr>
-            <th class="col-codigo text-center">Código</th>
-            <th class="col-titulo">Título del Ítem</th>
-            <th class="col-tipo text-center">Tipo</th>
-            <th class="col-duracion text-center">Duración</th>
-            <th class="col-horaaire text-center">⏱ Al Aire</th>
-            <th class="col-notas">Notas</th>
+            <th class="col-cod  tc">Código</th>
+            <th class="col-tipo tc">Tipo</th>
+            <th class="col-tit"    >Título del Ítem</th>
+            <th class="col-dur  tc">Duración</th>
+            <th class="col-aire tc">Al Aire</th>
+            <th class="col-not"    >Notas</th>
         </tr>
     </thead>
     <tbody>
 
-        @foreach($rundown->blocks->sortBy('order_index') as $blockIndex => $block)
+    @php $globalRow = 0; @endphp
+
+    @foreach($rundown->blocks->sortBy('order_index') as $blockIndex => $block)
+    @php
+        $blockLetra = chr(65 + $blockIndex);
+        $blockStart = $acumulado;
+    @endphp
+
+        <tr class="fila-blq">
+            <td style="text-align:center"><span class="blq-letra">{{ $blockLetra }}</span></td>
+            <td colspan="4">
+                <span class="blq-nom">BLOQUE {{ $blockLetra }}</span>
+                @if($block->title)
+                    <span class="blq-sub">&nbsp;&nbsp;&#8212;&nbsp;&nbsp;{{ $block->title }}</span>
+                @endif
+            </td>
+            <td class="blq-hora">&#9654; {{ escFmtHora($blockStart) }}</td>
+            {{-- nota: quitamos blq-dur de la última col porque la tabla tiene 6 cols ahora --}}
+        </tr>
+
+        @foreach($block->segments->sortBy('order_index') as $segIndex => $segment)
         @php
-            $blockNum   = $blockIndex + 1;
-            $blockStart = $acumulado;
+            $segNum     = $blockLetra . '.' . ($segIndex + 1);
+            $horaFinSeg = $acumulado + $segment->duration_seconds;
+            $acumulado += $segment->duration_seconds;
+            $globalRow++;
+            $rowClass   = ($globalRow % 2 === 0) ? 'par' : 'impar';
         @endphp
 
-            {{-- FILA SEPARADORA DE BLOQUE --}}
-            <tr class="fila-bloque">
-                <td class="text-center">
-                    <span class="bloque-codigo">B{{ $blockNum }}</span>
-                </td>
-                <td colspan="3" class="bloque-titulo">{{ $block->title }}</td>
-                <td class="bloque-hora">▶ {{ escFmtHora($blockStart) }}</td>
-                <td class="bloque-duracion">{{ escFmtDur($block->segments->sum('duration_seconds')) }}</td>
+            @if($segment->type === 'CORTE_COMERCIAL')
+            <tr class="fila-com">
+                <td>{{ $segNum }}</td>
+                <td>COM.</td>
+                <td colspan="2">&#8212;&#8212; {{ $segment->title }} &#8212;&#8212;</td>
+                <td>{{ escFmtHora($horaFinSeg) }}</td>
+                <td class="td-not" style="text-align:left; font-style:italic; color:#92400e;">{!! \App\Http\Controllers\RundownController::linkify($segment->production_notes) !!}</td>
             </tr>
-
-            {{-- SEGMENTOS --}}
-            @foreach($block->segments->sortBy('order_index') as $segIndex => $segment)
-            @php
-                $segNum  = "B{$blockNum}." . ($segIndex + 1);
-                $horaFinSeg = $acumulado + $segment->duration_seconds;
-                $acumulado += $segment->duration_seconds;
-            @endphp
-
-                @if($segment->type === 'CORTE_COMERCIAL')
-                    <tr class="fila-comercial">
-                        <td>{{ $segNum }}</td>
-                        <td colspan="3">── {{ $segment->title }} ──</td>
-                        <td>{{ escFmtHora($horaFinSeg) }}</td>
-                        <td>{{ escFmtDur($segment->duration_seconds) }}</td>
-                    </tr>
-                @else
-                    <tr class="seg-row seg-{{ $segment->type }}">
-                        <td class="td-codigo">{{ $segNum }}</td>
-                        <td class="td-titulo">{{ $segment->title }}</td>
-                        <td class="td-tipo">
-                            <span class="td-tipo badge-{{ $segment->type }}">
-                                {{ $typeLabels[$segment->type] ?? $segment->type }}
-                            </span>
-                        </td>
-                        <td class="td-duracion">{{ escFmtDur($segment->duration_seconds) }}</td>
-                        <td class="td-hora">{{ escFmtHora($horaFinSeg) }}</td>
-                        <td class="td-notas"></td>
-                    </tr>
-                @endif
-
-            @endforeach
+            @else
+            <tr class="seg-r {{ $rowClass }} seg-{{ $segment->type }}">
+                <td class="td-cod">{{ $segNum }}</td>
+                <td class="td-tipo">
+                    <span class="badge badge-{{ $segment->type }}">
+                        {{ $typeLabels[$segment->type] ?? $segment->type }}
+                    </span>
+                </td>
+                <td class="td-tit">{{ $segment->title }}</td>
+                <td class="td-dur">{{ escFmtDur($segment->duration_seconds) }}</td>
+                <td class="td-hora">{{ escFmtHora($horaFinSeg) }}</td>
+                <td class="td-not">{!! \App\Http\Controllers\RundownController::linkify($segment->production_notes) !!}</td>
+            </tr>
+            @endif
 
         @endforeach
+    @endforeach
 
-        {{-- FILA TOTALES --}}
-        <tr class="fila-total">
-            <td colspan="3" class="total-label">Duración Total del Programa</td>
-            <td class="total-valor">{{ escFmtDur($totalSeconds) }}</td>
-            <td class="total-fin">{{ escFmtHora($horaFin) }}</td>
-            <td></td>
-        </tr>
+    <tr class="fila-tot">
+        <td colspan="3" class="tot-lbl">Duración Total del Programa</td>
+        <td class="tot-val">{{ escFmtDur($totalSeconds) }}</td>
+        <td class="tot-fin">{{ escFmtHora($horaFin) }}</td>
+        <td></td>
+    </tr>
 
     </tbody>
 </table>

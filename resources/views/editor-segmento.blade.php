@@ -122,6 +122,31 @@
         </div>
     @endif
 
+    {{-- NOTAS DE PRODUCCIÓN --}}
+    <div class="mb-4">
+        <label class="text-[10px] uppercase text-gray-500 font-bold tracking-widest block mb-1">
+            📋 Notas de Producción
+        </label>
+        @if($locked)
+            <div class="w-full bg-gray-900/50 border border-gray-700/50 rounded p-3 text-gray-400 text-xs leading-relaxed whitespace-pre-wrap min-h-[4rem]">
+                {{ $segment->production_notes ?: '—' }}
+            </div>
+        @else
+            <div id="notes-indicator" class="text-[10px] text-gray-600 italic mb-1 text-right h-3"></div>
+            <textarea
+                name="production_notes"
+                hx-post="/segment/{{ $segment->id }}/update-notes"
+                hx-trigger="keyup changed delay:600ms"
+                hx-target="#notes-indicator"
+                placeholder="Instrucciones técnicas, menciones, comerciales, etc."
+                class="w-full bg-gray-900 text-gray-300 p-3 rounded border border-gray-700
+                       focus:border-amber-500 outline-none resize-none text-xs leading-relaxed
+                       hover:border-gray-500 transition placeholder-gray-700"
+                rows="4"
+            >{{ $segment->production_notes }}</textarea>
+        @endif
+    </div>
+
     {{-- SEPARADOR --}}
     <div class="border-t border-gray-700/60 mb-4"></div>
 
