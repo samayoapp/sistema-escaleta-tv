@@ -13,9 +13,10 @@
 
 @forelse($rundown->blocks->sortBy('order_index') as $blockIndex => $block)
 @php
-    $blockNum   = $blockIndex + 1;
-    $blockStart = $acumulado;
-    $segments   = $block->segments->sortBy('order_index');
+    $blockNum    = $blockIndex + 1;
+    $blockLetra  = chr(64 + $blockNum); // A, B, C, D...
+    $blockStart  = $acumulado;
+    $segments    = $block->segments->sortBy('order_index');
 @endphp
 
     {{-- CABECERA DEL BLOQUE --}}
@@ -36,26 +37,37 @@
 
         <td class="px-2 py-2 w-12">
             <span class="text-[10px] font-mono font-bold text-blue-500 bg-blue-900/50 px-2 py-1 rounded">
-                B{{ $blockNum }}
+                {{ $blockLetra }}
             </span>
         </td>
 
         <td class="px-2 py-2 col-titulo-bloque">
             @if($locked)
-                <span class="text-blue-400 font-bold uppercase text-xs tracking-widest">{{ $block->title }}</span>
+                <span class="text-blue-400 font-bold uppercase text-xs tracking-widest">
+                    BLOQUE {{ $blockLetra }}@if($block->title && $block->title !== '') — {{ $block->title }}@endif
+                </span>
             @else
-                <input
-                    type="text"
-                    value="{{ $block->title }}"
-                    name="title"
-                    hx-post="/block/{{ $block->id }}/update"
-                    hx-trigger="keyup[key=='Enter'], blur"
-                    hx-swap="none"
-                    onkeydown="if(event.key==='Enter') this.blur()"
-                    class="bg-transparent border-b border-transparent text-blue-400 font-bold uppercase text-xs
-                           focus:ring-0 focus:outline-none focus:border-blue-400 focus:bg-blue-900/40
-                           focus:px-2 focus:rounded w-full tracking-widest cursor-text transition-all duration-150
-                           hover:border-blue-700">
+                <div class="flex items-center gap-1">
+                    <span class="text-blue-500 font-black uppercase text-xs tracking-widest whitespace-nowrap select-none">
+                        BLOQUE {{ $blockLetra }}
+                    </span>
+                    @if($block->title !== null)
+                    <span class="text-blue-600 font-bold text-xs select-none">—</span>
+                    <input
+                        type="text"
+                        value="{{ $block->title }}"
+                        name="title"
+                        placeholder="Nombre del bloque..."
+                        hx-post="/block/{{ $block->id }}/update"
+                        hx-trigger="keyup[key=='Enter'], blur"
+                        hx-swap="none"
+                        onkeydown="if(event.key==='Enter') this.blur()"
+                        class="bg-transparent border-b border-transparent text-blue-300 font-bold uppercase text-xs
+                               focus:ring-0 focus:outline-none focus:border-blue-400 focus:bg-blue-900/40
+                               focus:px-2 focus:rounded w-full tracking-widest cursor-text transition-all duration-150
+                               hover:border-blue-700 placeholder-blue-800">
+                    @endif
+                </div>
             @endif
         </td>
 
@@ -104,7 +116,7 @@
     {{-- SEGMENTOS DEL BLOQUE --}}
     @forelse($segments as $segIndex => $segment)
     @php
-        $segNum  = "B{$blockNum}." . ($segIndex + 1);
+        $segNum  = $blockLetra . '.' . ($segIndex + 1);
         $horaFin = $acumulado + $segment->duration_seconds;
         $acumulado += $segment->duration_seconds;
     @endphp

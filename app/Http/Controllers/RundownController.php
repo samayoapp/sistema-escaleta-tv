@@ -64,7 +64,8 @@ public function editSegment($id)
 
     $blockIndex = $rundown->blocks->search(fn($b) => $b->id === $block->id);
     $segIndex   = $block->segments->search(fn($s) => $s->id === $segment->id);
-    $segNum     = 'B' . ($blockIndex + 1) . '.' . ($segIndex + 1);
+    $blockLetra = chr(65 + $blockIndex); // A, B, C...
+    $segNum     = $blockLetra . '.' . ($segIndex + 1);
 
     $locked = $this->calcLocked($rundown);
 
@@ -144,7 +145,7 @@ public function editSegment($id)
 
         Block::create([
             'rundown_id'  => $rundownId,
-            'title'       => 'NUEVO BLOQUE',
+            'title'       => '',
             'order_index' => $rundown->blocks()->count() + 1,
         ]);
 
