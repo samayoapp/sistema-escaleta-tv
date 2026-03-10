@@ -221,6 +221,10 @@
     // ── Helper central: actualizar tabla ─────────────────────────────────
     function reloadTabla(html, focusSegmentId) {
         const tbody = document.getElementById('tabla-segmentos');
+
+        // Guardar posición de scroll antes de modificar el DOM
+        const savedScroll = window.scrollY;
+
         tbody.innerHTML = html;
 
         // CRÍTICO: registrar todos los atributos hx-* de los nuevos elementos
@@ -229,6 +233,9 @@
         sortableInstance = null;
         initSortable();
         htmx.trigger(document.body, 'refreshTime');
+
+        // Restaurar scroll inmediatamente — evita el "brinco"
+        window.scrollTo({ top: savedScroll, behavior: 'instant' });
 
         if (selectedSegmentId) {
             const row = document.getElementById('segment-' + selectedSegmentId);
@@ -284,12 +291,22 @@
         }
     });
 
+    // ── BEFORE SWAP — guardar scroll antes de que HTMX modifique el DOM ──
+    let _savedScroll = 0;
+    document.addEventListener('htmx:beforeSwap', function(e) {
+        if (e.detail.target.id !== 'tabla-segmentos') return;
+        _savedScroll = window.scrollY;
+    });
+
     // ── AFTER SWAP — solo para operaciones HTMX normales ─────────────────
     document.addEventListener('htmx:afterSwap', function(e) {
         if (e.detail.target.id !== 'tabla-segmentos') return;
 
         // CRÍTICO: registrar atributos hx-* de los nuevos elementos
         htmx.process(e.detail.target);
+
+        // Restaurar scroll — evita el "brinco"
+        window.scrollTo({ top: _savedScroll, behavior: 'instant' });
 
         sortableInstance = null;
         initSortable();
