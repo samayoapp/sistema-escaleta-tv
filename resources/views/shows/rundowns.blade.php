@@ -163,21 +163,15 @@
                                 @if(!$emitida)
                                     {{-- Aprobar / Regresar a borrador --}}
                                     @if($borrador)
-                                        <form method="POST" action="/rundown/{{ $rundown->id }}/aprobar">
-                                            @csrf
-                                            <button type="submit"
-                                                class="bg-green-800 hover:bg-green-700 px-3 py-1 rounded text-xs font-bold uppercase transition text-green-300">
-                                                ✅ Aprobar
-                                            </button>
-                                        </form>
+                                        <button onclick="fetchAccion('/rundown/{{ $rundown->id }}/aprobar')"
+                                            class="bg-green-800 hover:bg-green-700 px-3 py-1 rounded text-xs font-bold uppercase transition text-green-300">
+                                            ✅ Aprobar
+                                        </button>
                                     @else
-                                        <form method="POST" action="/rundown/{{ $rundown->id }}/desaprobar">
-                                            @csrf
-                                            <button type="submit"
-                                                class="bg-yellow-900/50 hover:bg-yellow-800 px-3 py-1 rounded text-xs font-bold uppercase transition text-yellow-400">
-                                                ↩ Borrador
-                                            </button>
-                                        </form>
+                                        <button onclick="fetchAccion('/rundown/{{ $rundown->id }}/desaprobar')"
+                                            class="bg-yellow-900/50 hover:bg-yellow-800 px-3 py-1 rounded text-xs font-bold uppercase transition text-yellow-400">
+                                            ↩ Borrador
+                                        </button>
                                     @endif
 
                                     {{-- Editar fecha/hora --}}
@@ -193,17 +187,12 @@
                                     </button>
 
                                     {{-- Eliminar --}}
-                                    <form method="POST" action="/rundown/{{ $rundown->id }}/delete"
-                                        onsubmit="return confirm('¿Eliminar esta escaleta?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                            class="bg-red-900/40 hover:bg-red-700 px-3 py-1 rounded text-xs font-bold uppercase transition text-red-400">
-                                            🗑
-                                        </button>
-                                    </form>
+                                    <button onclick="fetchEliminar('/rundown/{{ $rundown->id }}/delete', '¿Eliminar esta escaleta?')"
+                                        class="bg-red-900/40 hover:bg-red-700 px-3 py-1 rounded text-xs font-bold uppercase transition text-red-400">
+                                        🗑
+                                    </button>
                                 @else
-                                    {{-- EMITIDA: duplicar siempre; editar/eliminar solo admin --}}
+                                    {{-- VENCIDA: duplicar siempre; editar/eliminar solo admin --}}
                                     <button onclick="abrirDuplicar({{ $rundown->id }}, '{{ $rundown->air_date }}')"
                                         class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs font-bold uppercase transition text-gray-400">
                                         📋 Duplicar
@@ -214,15 +203,10 @@
                                             title="Cambiar fecha/hora para desbloquear">
                                             🕐
                                         </button>
-                                        <form method="POST" action="/rundown/{{ $rundown->id }}/delete"
-                                            onsubmit="return confirm('¿Eliminar esta escaleta vencida? No se puede deshacer.')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                class="bg-red-900/40 hover:bg-red-700 px-3 py-1 rounded text-xs font-bold uppercase transition text-red-400">
-                                                🗑
-                                            </button>
-                                        </form>
+                                        <button onclick="fetchEliminar('/rundown/{{ $rundown->id }}/delete', '¿Eliminar esta escaleta vencida? No se puede deshacer.')"
+                                            class="bg-red-900/40 hover:bg-red-700 px-3 py-1 rounded text-xs font-bold uppercase transition text-red-400">
+                                            🗑
+                                        </button>
                                     @endif
                                 @endif
 
@@ -397,6 +381,38 @@
             document.getElementById('modal-editar-show').classList.add('hidden');
         }
     });
+
+    // ── Acciones via fetch (evita navegación completa en 403) ─────────────
+    const _csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    async function fetchAccion(url, method = 'POST') {
+        const res = await fetch(url, {
+            method,
+            headers: {
+                'X-CSRF-TOKEN': _csrf,
+                'Accept': 'application/json',
+            }
+        });
+        if (res.ok) {
+            window.location.reload();
+        }
+        // Los 403 los captura el wrapper de fetch en navbar.blade.php
+    }
+
+    async function fetchEliminar(url, confirmMsg) {
+        if (!confirm(confirmMsg)) return;
+        const res = await fetch(url, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': _csrf,
+                'Accept': 'application/json',
+            }
+        });
+        if (res.ok) {
+            window.location.reload();
+        }
+        // Los 403 los captura el wrapper de fetch en navbar.blade.php
+    }
 </script>
 
 </body>

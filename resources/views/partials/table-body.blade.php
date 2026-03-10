@@ -74,6 +74,7 @@
         <td class="px-4 py-2 text-right">
             @if(!$locked)
             <div class="flex justify-end gap-2">
+                @if(auth()->user()->isEditor())
                 <button
                     hx-post="/block/{{ $block->id }}/add-segment"
                     hx-target="#tabla-segmentos"
@@ -89,6 +90,12 @@
                     class="text-red-400 hover:text-red-300 text-xs transition px-2 py-1 rounded border border-red-900 hover:border-red-700">
                     🗑
                 </button>
+                @else
+                <button onclick="sinPermiso('Solo editores y admins pueden modificar bloques.')"
+                    class="text-gray-600 text-xs font-bold uppercase px-2 py-1 rounded border border-gray-800 cursor-not-allowed">
+                    + Ítem
+                </button>
+                @endif
             </div>
             @endif
         </td>
@@ -108,10 +115,10 @@
             <td colspan="6" class="p-0">
                 <div class="h-0 group-hover/insert:h-6 overflow-hidden transition-all duration-150 flex items-center justify-center">
                     <button
-                        onclick="event.stopPropagation(); insertarItemDespues(0, {{ $block->id }})"
+                        onclick="event.stopPropagation(); {{ auth()->user()->isEditor() ? 'insertarItemDespues(0, ' . $block->id . ')' : "sinPermiso('Solo editores pueden insertar ítems.')" }}"
                         class="w-full h-5 flex items-center justify-center gap-1
-                               text-[10px] font-bold text-green-400 bg-green-900/20 hover:bg-green-900/40
-                               border-y border-dashed border-green-800/40 hover:border-green-600 transition">
+                               text-[10px] font-bold {{ auth()->user()->isEditor() ? 'text-green-400 bg-green-900/20 hover:bg-green-900/40 border-green-800/40 hover:border-green-600' : 'text-gray-600 bg-gray-800/20 border-gray-700/30 cursor-not-allowed' }}
+                               border-y border-dashed transition">
                         <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"/>
                         </svg>
@@ -267,10 +274,10 @@
             <td colspan="6" class="p-0">
                 <div class="h-0 group-hover/insert:h-6 overflow-hidden transition-all duration-150 flex items-center justify-center">
                     <button
-                        onclick="event.stopPropagation(); insertarItemDespues({{ $segment->id }}, {{ $block->id }})"
+                        onclick="event.stopPropagation(); {{ auth()->user()->isEditor() ? 'insertarItemDespues(' . $segment->id . ', ' . $block->id . ')' : "sinPermiso('Solo editores pueden insertar ítems.')" }}"
                         class="w-full h-5 flex items-center justify-center gap-1
-                               text-[10px] font-bold text-green-400 bg-green-900/20 hover:bg-green-900/40
-                               border-y border-dashed border-green-800/40 hover:border-green-600 transition">
+                               text-[10px] font-bold {{ auth()->user()->isEditor() ? 'text-green-400 bg-green-900/20 hover:bg-green-900/40 border-green-800/40 hover:border-green-600' : 'text-gray-600 bg-gray-800/20 border-gray-700/30 cursor-not-allowed' }}
+                               border-y border-dashed transition">
                         <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"/>
                         </svg>

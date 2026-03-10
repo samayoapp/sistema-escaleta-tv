@@ -130,17 +130,27 @@
                         Estructura del Programa
                     </h2>
                     @if(!$locked)
-                    <button
-                        onclick="justAddedItem = true"
-                        hx-post="/rundown/{{ $rundown->id }}/add-block"
-                        hx-target="#tabla-segmentos"
-                        hx-swap="innerHTML"
-                        class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2 px-4 rounded transition flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                        </svg>
-                        NUEVO BLOQUE
-                    </button>
+                        @if(auth()->user()->isEditor())
+                        <button
+                            onclick="justAddedItem = true"
+                            hx-post="/rundown/{{ $rundown->id }}/add-block"
+                            hx-target="#tabla-segmentos"
+                            hx-swap="innerHTML"
+                            class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2 px-4 rounded transition flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            NUEVO BLOQUE
+                        </button>
+                        @else
+                        <button onclick="sinPermiso('Solo editores y admins pueden agregar bloques.')"
+                            class="bg-gray-700 text-gray-500 text-xs font-bold py-2 px-4 rounded flex items-center gap-2 cursor-not-allowed">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            NUEVO BLOQUE
+                        </button>
+                        @endif
                     @endif
                 </div>
 
@@ -212,6 +222,10 @@
     function reloadTabla(html, focusSegmentId) {
         const tbody = document.getElementById('tabla-segmentos');
         tbody.innerHTML = html;
+
+        // CRÍTICO: registrar todos los atributos hx-* de los nuevos elementos
+        htmx.process(tbody);
+
         sortableInstance = null;
         initSortable();
         htmx.trigger(document.body, 'refreshTime');
@@ -273,6 +287,9 @@
     // ── AFTER SWAP — solo para operaciones HTMX normales ─────────────────
     document.addEventListener('htmx:afterSwap', function(e) {
         if (e.detail.target.id !== 'tabla-segmentos') return;
+
+        // CRÍTICO: registrar atributos hx-* de los nuevos elementos
+        htmx.process(e.detail.target);
 
         sortableInstance = null;
         initSortable();
