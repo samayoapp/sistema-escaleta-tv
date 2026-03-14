@@ -7,14 +7,14 @@
 
         @page {
             size: letter portrait;
-            margin: 2cm 2cm 2cm 2cm;
+            margin: 2cm 2.8cm 2cm 2cm;
         }
 
         body {
             font-family: 'DejaVu Sans', sans-serif;
             font-size: 10pt;
             color: #1a1a1a;
-            line-height: 1.4;
+            line-height: 1.0;
             background: white;
         }
 
@@ -64,49 +64,58 @@
 
         /* ── TÍTULO PRIMERA PÁGINA ── */
         .titulo-pagina {
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 3px solid #334155;
+            border-top: 4px solid #1e3a5f;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 10px 0 8px 0;
+            margin-bottom: 14px;
         }
-        .titulo-pagina .doc-label {
-            font-size: 7.5pt;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            margin-bottom: 6px;
-        }
-        .titulo-pagina h1 {
-            font-size: 20pt;
+        .titulo-top-table { width: 100%; border-collapse: collapse; }
+        .titulo-top-table td { border: none; padding: 0; vertical-align: middle; }
+        .titulo-show {
+            font-size: 17pt;
             font-weight: bold;
-            color: #334155;
+            color: #1e3a5f;
             text-transform: uppercase;
             letter-spacing: 2px;
             line-height: 1.1;
-            margin-bottom: 8px;
         }
-        .titulo-pagina .linea {
-            width: 40px;
-            height: 3px;
-            background: #3b82f6;
-            margin-bottom: 10px;
-        }
-        .titulo-pagina .meta-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .titulo-pagina .meta-text {
-            font-size: 9pt;
+        .titulo-canal {
+            font-size: 7.5pt;
             color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 3px;
         }
-        .titulo-pagina .duracion-badge {
-            font-size: 8pt;
+        .titulo-doc-label {
+            font-size: 6.5pt;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 3px;
+            text-align: right;
+        }
+        .titulo-fecha {
+            font-size: 12pt;
             font-weight: bold;
-            color: #1d4ed8;
-            border: 1px solid #bfdbfe;
-            background: #eff6ff;
-            padding: 3px 12px;
-            letter-spacing: 0.5px;
+            color: #334155;
+            text-align: right;
+        }
+        .titulo-datos {
+            background: #f8fafc;
+            border-left: 4px solid #1e3a5f;
+            border-bottom: 2px solid #e2e8f0;
+            padding: 5px 14px;
+            margin-bottom: 18px;
+        }
+        .titulo-datos table { width: 100%; border-collapse: collapse; }
+        .titulo-datos td    { border: none; padding: 2px 20px 2px 0; vertical-align: middle; }
+        .dato-lbl {
+            font-size: 6pt; color: #94a3b8;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .dato-val {
+            font-size: 9pt; font-weight: bold;
+            color: #1e3a5f; font-family: 'DejaVu Sans Mono', monospace;
         }
 
         /* ── CABECERA DE BLOQUE ── */
@@ -203,12 +212,13 @@
         .guion-wrapper {
             margin-left: 32px;
             padding-left: 14px;
+            padding-right: 100px;
             border-left: 2px solid #e2e8f0;
         }
         .guion {
             font-family: 'DejaVu Serif', Georgia, serif;
             font-size: 11pt;
-            line-height: 1.45;
+            line-height: 1.3;
             color: #0f172a;
             white-space: pre-wrap;
             word-wrap: break-word;
@@ -281,18 +291,40 @@
     {{ $rundown->show->title }} &nbsp;·&nbsp; {{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }} &nbsp;·&nbsp; Uso Interno
 </div>
 
-{{-- TÍTULO PRIMERA PÁGINA (sin portada) --}}
+{{-- TÍTULO PRIMERA PÁGINA --}}
 <div class="titulo-pagina">
-    <div class="doc-label">Guion Literario</div>
-    <h1>{{ $rundown->show->title }}</h1>
-    <div class="linea"></div>
-    <div class="meta-row">
-        <div class="meta-text">
-            {{ \Carbon\Carbon::parse($rundown->air_date)->isoFormat('dddd D [de] MMMM [de] YYYY') }}
-            &nbsp;·&nbsp; Estado: {{ ucfirst($rundown->status) }}
-        </div>
-        <span class="duracion-badge">Duración estimada: {{ $totalMin }} min {{ $totalSeg }} seg</span>
-    </div>
+    <table class="titulo-top-table"><tr>
+        <td style="width:65%">
+            <div class="titulo-show">{{ $rundown->show->title }}</div>
+            @if($rundown->show->channel)
+                <div class="titulo-canal">{{ $rundown->show->channel }}</div>
+            @endif
+        </td>
+        <td style="width:35%">
+            <div class="titulo-doc-label">Guion Literario</div>
+            <div class="titulo-fecha">{{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}</div>
+        </td>
+    </tr></table>
+</div>
+<div class="titulo-datos">
+    <table><tr>
+        <td>
+            <div class="dato-lbl">Emisión</div>
+            <div class="dato-val">{{ \Carbon\Carbon::parse($rundown->air_date)->isoFormat('dddd D MMM YYYY') }}</div>
+        </td>
+        <td>
+            <div class="dato-lbl">Estado</div>
+            <div class="dato-val">{{ ucfirst($rundown->status) }}</div>
+        </td>
+        <td>
+            <div class="dato-lbl">Duración estimada</div>
+            <div class="dato-val">{{ $totalMin }}m {{ $totalSeg }}s</div>
+        </td>
+        <td>
+            <div class="dato-lbl">Ítems con guion</div>
+            <div class="dato-val">{{ $rundown->blocks->flatMap->segments->where('has_script', true)->count() }}</div>
+        </td>
+    </tr></table>
 </div>
 
 {{-- BLOQUES --}}
@@ -332,10 +364,10 @@
             <div class="segmento">
                 <div class="segmento-cabecera">
                     <span class="seg-codigo">{{ $segNum }}</span>
-                    <span class="seg-titulo">{{ $segment->title }}</span>
                     <span class="seg-tipo tipo-{{ $segment->type }}">
                         {{ $typeLabels[$segment->type] ?? $segment->type }}
                     </span>
+                    <span class="seg-titulo">{{ $segment->title }}</span>
                     <span class="seg-duracion">
                         {{ floor($segment->duration_seconds / 60) }}m {{ $segment->duration_seconds % 60 }}s
                     </span>

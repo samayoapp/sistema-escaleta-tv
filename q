@@ -1,0 +1,125 @@
+[33mcommit 037ef4bc28f12c6eb6244a73c2f548d900a8296f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: Allan Samayoa <allan.samayoa@gmail.com>
+Date:   Mon Mar 9 23:58:51 2026 -0600
+
+    feat: Agrega modal pop up para notas de la producción
+
+[33mcommit 8e5da86f275e7ae4a18bcfeffb94df64d99fa8d8[m
+Author: Allan Samayoa <allan.samayoa@gmail.com>
+Date:   Mon Mar 9 22:37:13 2026 -0600
+
+    fix/feat: Modifica posición de tipos de content, Agrega notas de produccion para cada item y en escaleta
+
+[33mcommit 754c2858230766767f0322a10667c94cc702a0c7[m[33m ([m[1;31morigin/main[m[33m)[m
+Author: Allan Samayoa <allan.samayoa@gmail.com>
+Date:   Mon Mar 9 21:17:24 2026 -0600
+
+    feat: Modifica los Titulos de Bloques para automatizar Codigo de tipo A, B, C
+
+[33mcommit 5b53abc663713090ba1af6b4897afeb5223b2702[m
+Author: Allan Samayoa <allan.samayoa@gmail.com>
+Date:   Mon Mar 9 21:06:29 2026 -0600
+
+    fix: Corregir el salto de pantalla molesto cuando se modifica item
+
+[33mcommit 67834c5df170714096c2b58efd4e0751615db341[m
+Author: Allan Samayoa <allan.samayoa@gmail.com>
+Date:   Mon Mar 9 21:00:23 2026 -0600
+
+    fix: Corregir problema de actualizacion de botones e items
+
+[33mcommit 4b8eebbbb9a6e0b7b24f52d470516b75e03ad22d[m
+Author: Allan Samayoa <allan.samayoa@gmail.com>
+Date:   Sun Mar 8 15:35:12 2026 -0600
+
+    fix: corregir error de agregar item entre otros items
+
+[33mcommit c95cc76151c89afbb60a5e591f218f76b1c012d9[m
+Author: Allan Samayoa <allan.samayoa@gmail.com>
+Date:   Sat Mar 7 23:15:23 2026 -0600
+
+    feat: sistema de usuarios con roles + RONUP branding + fixes críticos
+    
+    FEATURES:
+    - Autenticación con Laravel Breeze (login personalizado estilo RONUP)
+    - Roles globales: admin / editor / viewer con middleware CheckRole
+    - Gestión de usuarios en /admin/usuarios (crear, editar, eliminar)
+    - Navbar persistente con badge de rol, logout y link a usuarios
+    - Login page personalizado con branding RONUP by Publiamtec
+    
+    FIXES:
+    - Timezone corregido a America/Tegucigalpa en toda la app
+    - Bloqueo de escaleta ahora ocurre 1 hora después de la hora de emisión
+    - Escaletas vencidas permiten ver propiedades de ítems en modo solo lectura
+    - Panel editor-segmento en modo solo lectura cuando escaleta está vencida
+    - calcLocked() centralizado en RundownController para consistencia
+    
+    CAMBIOS DE NOMENCLATURA:
+    - 'Emitida' renombrado a 'Vencida' en toda la interfaz
+    - Banner de escaleta vencida con borde rojo punteado más notorio
+    - Nombre de la app cambiado a RONUP by Publiamtec con ícono de whisky
+    
+    PERMISOS POR ROL:
+    - Admin: acceso total, gestión de usuarios, aprobar/eliminar escaletas vencidas
+    - Editor: crear y editar escaletas y segmentos
+    - Viewer: solo lectura, puede ver propiedades y exportar PDF
+
+[33mcommit 71c42b1bde2832ab0a0efa489125b89ae9c95798[m
+Author: Allan Samayoa <allan.samayoa@gmail.com>
+Date:   Sat Mar 7 18:56:36 2026 -0600
+
+    fix: Items intermedios corregidos para renombrar
+
+[33mcommit b746a7b3cb97ed5a459e07da97ec18e6d2aee0c9[m
+Author: Allan Samayoa <allan.samayoa@gmail.com>
+Date:   Sat Mar 7 18:27:56 2026 -0600
+
+    feat: Select Teleprompter y agregar items intermedios
+
+[33mcommit 8bb6affcb89e9962e6d8c8431d265f54ecba3e6e[m
+Author: Allan Samayoa <allan.samayoa@gmail.com>
+Date:   Thu Mar 5 19:26:26 2026 -0600
+
+    fix/feat: Correccion de foco en nombres y agregado de barra de propiedades y selector de items
+
+[33mcommit ca8afab12c9fe599c1b8ada20e70b79e0fe2725a[m
+Author: Allan Samayoa <allan.samayoa@gmail.com>
+Date:   Wed Mar 4 00:32:16 2026 -0600
+
+    fix: Conexion de escaletas correctas, borrado de Shows agregado
+
+[33mcommit def96766e789ae03f1b44d3dec523ca89546f1a4[m
+Author: Allan Samayoa <allan.samayoa@gmail.com>
+Date:   Tue Mar 3 23:55:35 2026 -0600
+
+    feat: catálogo de shows, repositorio de escaletas y duplicar rundown
+
+[33mcommit 11dfc8bb8688d62b0c219dd3f76b60dbc8bee0b2[m
+Author: Allan Samayoa <allan.samayoa@gmail.com>
+Date:   Tue Mar 3 23:35:45 2026 -0600
+
+    feat: Generacion de Escaleta horizontal tabulada
+
+[33mcommit 2162c8a9de9d629ce388c0a4e8292704b6184eba[m
+Author: Allan Samayoa <allan.samayoa@gmail.com>
+Date:   Tue Mar 3 23:28:04 2026 -0600
+
+    fix: Cambio de hora de inicio de show corregido
+
+[33mcommit bff9fc5e19427500332ccd4d96c2afcff8ff2789[m
+Author: Allan Samayoa <allan.samayoa@gmail.com>
+Date:   Tue Mar 3 22:55:13 2026 -0600
+
+    feat: Agregada columna de duracion acumulada y hora de inicio del Show
+
+[33mcommit 6ba686345d950b303040df0eaf241dde5a855557[m
+Author: Allan Samayoa <allan.samayoa@gmail.com>
+Date:   Mon Mar 2 19:08:44 2026 -0600
+
+    feat: bloques, segmentos, drag&drop, autoorder, teleprompter y generación PDFGuionliterario
+
+[33mcommit 059f11bf7cbba5227692a84ff18a698325ab6674[m
+Author: Allan Samayoa <allan.samayoa@gmail.com>
+Date:   Mon Mar 2 04:56:03 2026 -0600
+
+    Primer guardado: Escaleta con autoguardado, drag & drop y borrado funcional
