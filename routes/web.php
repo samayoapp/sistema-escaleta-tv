@@ -43,6 +43,8 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('role:admin,editor');
     Route::post('/rundown/{id}/reorder',            [RundownController::class, 'reorder'])
         ->middleware('role:admin,editor');
+    Route::post('/rundown/{id}/reorder-blocks', [RundownController::class, 'reorderBlocks'])
+        ->middleware('role:admin,editor');
     Route::post('/rundown/{id}/update-time',        [RundownController::class, 'updateTime'])
         ->middleware('role:admin,editor');
     Route::get('/rundown/{id}/get-time',            [RundownController::class, 'getTime']);

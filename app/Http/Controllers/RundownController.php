@@ -144,6 +144,19 @@ public function editSegment($id)
         return $this->renderTable($rundownId);
     }
 
+    public function reorderBlocks(Request $request, $rundownId)
+    {
+        $blockIds = $request->input('block_ids', []);
+
+        foreach ($blockIds as $index => $blockId) {
+            Block::where('id', $blockId)
+                ->where('rundown_id', $rundownId) // seguridad: solo bloques de este rundown
+                ->update(['order_index' => $index + 1]);
+        }
+
+        return $this->renderTable($rundownId);
+    }
+
     // ─── Bloques ──────────────────────────────────────────────────────────────
 
     public function addBlock($rundownId)
@@ -205,21 +218,6 @@ public function editSegment($id)
 
     // ─── PDF ──────────────────────────────────────────────────────────────────
 
-    /**
-     * Convierte URLs en texto plano a <a href> clicables para DomPDF.
-     */
-    public static function linkify(?string $text): string
-    {
-        if (!$text) return '';
-        $escaped = e($text);
-        $pattern = '~(https?://[^\s<>"\']+)~i';
-        return preg_replace(
-            $pattern,
-            '<a href="$1" style="color:#2563eb;text-decoration:underline;">$1</a>',
-            $escaped
-        );
-    }
-
     public function generatePdf($id)
     {
         $rundown = Rundown::with([
@@ -233,7 +231,7 @@ public function editSegment($id)
 
         $filename = 'guion-' . str($rundown->show->title)->slug() . '-' . $rundown->air_date . '.pdf';
 
-        return $pdf->stream($filename);
+        return $pdf->download($filename);
     }
 
     public function generatePdfEscaleta($id)
@@ -249,7 +247,7 @@ public function editSegment($id)
 
         $filename = 'escaleta-' . str($rundown->show->title)->slug() . '-' . $rundown->air_date . '.pdf';
 
-        return $pdf->stream($filename);
+        return $pdf->download($filename);
     }
 
     public function toggleScript($id)

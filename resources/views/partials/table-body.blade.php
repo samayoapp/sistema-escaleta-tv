@@ -24,15 +24,25 @@
         data-block-id="{{ $block->id }}">
 
         <td class="px-4 py-2 w-10">
-            <button onclick="toggleBlock({{ $block->id }})"
-                class="text-blue-400 hover:text-white transition focus:outline-none {{ $locked ? 'opacity-40 cursor-not-allowed' : '' }}"
-                {{ $locked ? 'disabled' : '' }}>
-                <svg id="arrow-{{ $block->id }}"
-                    class="h-4 w-4 transform transition-transform duration-200 rotate-90"
-                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                </svg>
-            </button>
+            <div class="flex items-center gap-1">
+                @if(!$locked)
+                <div class="block-drag-handle cursor-grab active:cursor-grabbing text-blue-800 hover:text-blue-400 transition"
+                     title="Arrastrar bloque">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </div>
+                @endif
+                <button onclick="toggleBlock({{ $block->id }})"
+                    class="text-blue-400 hover:text-white transition focus:outline-none {{ $locked ? 'opacity-40 cursor-not-allowed' : '' }}"
+                    {{ $locked ? 'disabled' : '' }}>
+                    <svg id="arrow-{{ $block->id }}"
+                        class="h-4 w-4 transform transition-transform duration-200 rotate-90"
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </button>
+            </div>
         </td>
 
         <td class="px-2 py-2 w-12">

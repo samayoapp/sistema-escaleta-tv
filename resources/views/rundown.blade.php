@@ -422,6 +422,7 @@
         const tbody = document.getElementById('tabla-segmentos');
         if (!tbody || sortableInstance) return;
 
+        // ── Sortable de SEGMENTOS dentro de cada bloque ───────────────────
         sortableInstance = Sortable.create(tbody, {
             animation: 150,
             handle: '.drag-handle',
@@ -450,6 +451,31 @@
                         'X-CSRF-TOKEN': CSRF,
                     },
                     body: JSON.stringify({ blocks: payload })
+                })
+                .then(r => r.text())
+                .then(html => reloadTabla(html, null));
+            }
+        });
+
+        // ── Sortable de BLOQUES completos ─────────────────────────────────
+        // Al soltar un bloque, enviamos el nuevo orden al servidor.
+        // Las letras A/B/C se recalculan solas en el render de table-body.
+        Sortable.create(tbody, {
+            animation: 150,
+            handle: '.block-drag-handle',
+            ghostClass: 'opacity-20',
+            draggable: '.block-header',
+            onEnd: function() {
+                const blockIds = [...tbody.querySelectorAll('tr.block-header')]
+                    .map(row => row.dataset.blockId);
+
+                fetch('/rundown/{{ $rundown->id }}/reorder-blocks', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': CSRF,
+                    },
+                    body: JSON.stringify({ block_ids: blockIds })
                 })
                 .then(r => r.text())
                 .then(html => reloadTabla(html, null));
