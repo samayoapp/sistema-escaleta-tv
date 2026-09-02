@@ -154,24 +154,19 @@
     <div class="border-t border-gray-700/60 mb-4"></div>
 
     {{-- TIPO + DURACIÓN --}}
+    @php
+        $productionType = $segment->block->rundown->show->production_type ?? 'live';
+        $segmentTypes   = \App\Config\SegmentTypes::forType($productionType);
+        $currentType    = collect($segmentTypes)->firstWhere('value', $segment->type);
+        $tipoColor      = $currentType['color'] ?? 'text-gray-400';
+        $tipoLabel      = $currentType['label'] ?? $segment->type;
+    @endphp
     <div class="grid grid-cols-2 gap-3">
         <div>
             <label class="text-[10px] uppercase text-gray-500 font-bold tracking-widest block mb-1">Tipo</label>
             @if($locked)
-                @php
-                    $tipoColor = match($segment->type) {
-                        'VIVO'            => 'text-red-400',
-                        'VTR'             => 'text-green-400',
-                        'OFF'             => 'text-purple-400',
-                        'CORTE_COMERCIAL' => 'text-yellow-400',
-                        'NOTA_SECA'       => 'text-gray-400',
-                        'PRESENTACION'    => 'text-blue-400',
-                        'CIERRE'          => 'text-orange-400',
-                        default           => 'text-gray-400'
-                    };
-                @endphp
                 <div class="w-full bg-gray-900/50 border border-gray-700/50 rounded px-2 py-2 text-xs {{ $tipoColor }}">
-                    {{ $segment->type }}
+                    {{ $tipoLabel }}
                 </div>
             @else
             <select
@@ -181,24 +176,14 @@
                 hx-target="#tabla-segmentos"
                 hx-swap="innerHTML"
                 class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-2 text-xs
-                       focus:border-blue-500 focus:outline-none cursor-pointer
-                       {{ match($segment->type) {
-                           'VIVO'            => 'text-red-400',
-                           'VTR'             => 'text-green-400',
-                           'OFF'             => 'text-purple-400',
-                           'CORTE_COMERCIAL' => 'text-yellow-400',
-                           'NOTA_SECA'       => 'text-gray-400',
-                           'PRESENTACION'    => 'text-blue-400',
-                           'CIERRE'          => 'text-orange-400',
-                           default           => 'text-gray-400'
-                       } }}">
-                <option value="VIVO"            {{ $segment->type == 'VIVO'            ? 'selected' : '' }} class="bg-gray-800 text-red-400">🔴 VIVO</option>
-                <option value="VTR"             {{ $segment->type == 'VTR'             ? 'selected' : '' }} class="bg-gray-800 text-green-400">🎬 VTR</option>
-                <option value="OFF"             {{ $segment->type == 'OFF'             ? 'selected' : '' }} class="bg-gray-800 text-purple-400">🎙️ OFF</option>
-                <option value="CORTE_COMERCIAL" {{ $segment->type == 'CORTE_COMERCIAL' ? 'selected' : '' }} class="bg-gray-800 text-yellow-400">💰 COMERCIAL</option>
-                <option value="NOTA_SECA"       {{ $segment->type == 'NOTA_SECA'       ? 'selected' : '' }} class="bg-gray-800 text-gray-400">📄 NOTA SECA</option>
-                <option value="PRESENTACION"    {{ $segment->type == 'PRESENTACION'    ? 'selected' : '' }} class="bg-gray-800 text-blue-400">🎤 PRESENTACIÓN</option>
-                <option value="CIERRE"          {{ $segment->type == 'CIERRE'          ? 'selected' : '' }} class="bg-gray-800 text-orange-400">🏁 CIERRE</option>
+                       focus:border-blue-500 focus:outline-none cursor-pointer {{ $tipoColor }}">
+                @foreach($segmentTypes as $st)
+                    <option value="{{ $st['value'] }}"
+                        {{ $segment->type === $st['value'] ? 'selected' : '' }}
+                        class="bg-gray-800 {{ $st['color'] }}">
+                        {{ $st['label'] }}
+                    </option>
+                @endforeach
             </select>
             @endif
         </div>

@@ -142,18 +142,25 @@
         @endif
 
         {{-- FILA DE SEGMENTO --}}
+        @php
+            $productionType  = $rundown->show->production_type ?? 'live';
+            $segmentTypesCfg = \App\Config\SegmentTypes::forType($productionType);
+            $currentTypeCfg  = collect($segmentTypesCfg)->firstWhere('value', $segment->type);
+            $borderHex       = $currentTypeCfg['border'] ?? '#94a3b8';
+            // Clase de fila según color del tipo
+            $rowBorderClass  = match(true) {
+                str_contains($borderHex, 'ef4444') || str_contains($borderHex, 'dc2626') => 'border-l-4 border-l-red-500 bg-red-500/5 hover:bg-red-500/10',
+                str_contains($borderHex, '22c55e') => 'border-l-4 border-l-green-500 bg-green-500/5 hover:bg-green-500/10',
+                str_contains($borderHex, 'a855f7') => 'border-l-4 border-l-purple-500 bg-purple-500/5 hover:bg-purple-500/10',
+                str_contains($borderHex, 'eab308') => 'border-l-4 border-l-yellow-500 bg-yellow-500/5 hover:bg-yellow-500/10',
+                str_contains($borderHex, '3b82f6') => 'border-l-4 border-l-blue-400 bg-blue-400/5 hover:bg-blue-400/10',
+                str_contains($borderHex, 'f97316') => 'border-l-4 border-l-orange-500 bg-orange-500/5 hover:bg-orange-500/10',
+                str_contains($borderHex, 'ec4899') => 'border-l-4 border-l-pink-500 bg-pink-500/5 hover:bg-pink-500/10',
+                default                             => 'hover:bg-gray-700/30',
+            };
+        @endphp
         <tr class="block-segment segment-of-{{ $block->id }} transition-colors border-b border-gray-700/30
-            {{ $locked ? 'opacity-60' : '' }}
-            {{ match($segment->type) {
-                'VIVO'            => 'border-l-4 border-l-red-500 bg-red-500/5 hover:bg-red-500/10',
-                'VTR'             => 'border-l-4 border-l-green-500 bg-green-500/5 hover:bg-green-500/10',
-                'OFF'             => 'border-l-4 border-l-purple-500 bg-purple-500/5 hover:bg-purple-500/10',
-                'CORTE_COMERCIAL' => 'border-l-4 border-l-yellow-500 bg-yellow-500/5 hover:bg-yellow-500/10',
-                'NOTA_SECA'       => 'border-l-4 border-l-gray-500 bg-gray-500/5 hover:bg-gray-500/10',
-                'PRESENTACION'    => 'border-l-4 border-l-blue-400 bg-blue-400/5 hover:bg-blue-400/10',
-                'CIERRE'          => 'border-l-4 border-l-orange-500 bg-orange-500/5 hover:bg-orange-500/10',
-                default           => 'hover:bg-gray-700/30'
-            } }}"
+            {{ $locked ? 'opacity-60' : '' }} {{ $rowBorderClass }}"
             id="segment-{{ $segment->id }}"
             data-segment-id="{{ $segment->id }}"
             data-block-id="{{ $block->id }}"
@@ -180,8 +187,8 @@
             <td class="px-4 py-3" onclick="event.stopPropagation()">
                 @if($locked)
                     <div class="font-medium text-sm text-gray-400">{{ $segment->title }}</div>
-                    <div class="text-[10px] font-bold uppercase mt-0.5 text-gray-600">
-                        {{ $segment->type }}
+                    <div class="text-[10px] font-bold uppercase mt-0.5 {{ $currentTypeCfg['color'] ?? 'text-gray-600' }}">
+                        {{ $currentTypeCfg['label'] ?? $segment->type }}
                     </div>
                 @else
                     <input
@@ -203,23 +210,14 @@
                         hx-target="#tabla-segmentos"
                         hx-swap="innerHTML"
                         class="bg-transparent text-[10px] font-bold uppercase mt-1 cursor-pointer focus:outline-none
-                        {{ match($segment->type) {
-                            'VIVO'            => 'text-red-400',
-                            'VTR'             => 'text-green-400',
-                            'OFF'             => 'text-purple-400',
-                            'CORTE_COMERCIAL' => 'text-yellow-400',
-                            'NOTA_SECA'       => 'text-gray-400',
-                            'PRESENTACION'    => 'text-blue-400',
-                            'CIERRE'          => 'text-orange-400',
-                            default           => 'text-gray-400'
-                        } }}">
-                        <option value="VIVO"            {{ $segment->type == 'VIVO'            ? 'selected' : '' }} class="bg-gray-800">🔴 VIVO</option>
-                        <option value="VTR"             {{ $segment->type == 'VTR'             ? 'selected' : '' }} class="bg-gray-800">🎬 VTR</option>
-                        <option value="OFF"             {{ $segment->type == 'OFF'             ? 'selected' : '' }} class="bg-gray-800">🎙️ OFF</option>
-                        <option value="CORTE_COMERCIAL" {{ $segment->type == 'CORTE_COMERCIAL' ? 'selected' : '' }} class="bg-gray-800">💰 COMERCIAL</option>
-                        <option value="NOTA_SECA"       {{ $segment->type == 'NOTA_SECA'       ? 'selected' : '' }} class="bg-gray-800">📄 NOTA SECA</option>
-                        <option value="PRESENTACION"    {{ $segment->type == 'PRESENTACION'    ? 'selected' : '' }} class="bg-gray-800">🎤 PRESENTACIÓN</option>
-                        <option value="CIERRE"          {{ $segment->type == 'CIERRE'          ? 'selected' : '' }} class="bg-gray-800">🏁 CIERRE</option>
+                            {{ $currentTypeCfg['color'] ?? 'text-gray-400' }}">
+                        @foreach($segmentTypesCfg as $st)
+                            <option value="{{ $st['value'] }}"
+                                {{ $segment->type === $st['value'] ? 'selected' : '' }}
+                                class="bg-gray-800 {{ $st['color'] }}">
+                                {{ $st['label'] }}
+                            </option>
+                        @endforeach
                     </select>
                     @if($segment->has_script)
                         <span class="text-[9px] text-blue-500/60 ml-1">· guion</span>

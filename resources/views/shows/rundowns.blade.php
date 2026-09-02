@@ -96,8 +96,13 @@
             <table class="w-full">
                 <thead>
                     <tr class="border-b border-gray-700 text-xs uppercase text-gray-500 tracking-widest">
-                        <th class="px-5 py-3 text-left">Fecha</th>
-                        <th class="px-5 py-3 text-left">Hora</th>
+                        @if($show->isReality())
+                            <th class="px-5 py-3 text-left">Episodio</th>
+                            <th class="px-5 py-3 text-left">Fecha</th>
+                        @else
+                            <th class="px-5 py-3 text-left">Fecha</th>
+                            <th class="px-5 py-3 text-left">Hora</th>
+                        @endif
                         <th class="px-5 py-3 text-left">Estado</th>
                         <th class="px-5 py-3 text-right">Acciones</th>
                     </tr>
@@ -113,7 +118,37 @@
                     <tr class="hover:bg-gray-700/30 transition group
                         {{ $emitida ? 'opacity-50' : '' }}">
 
-                        {{-- Fecha --}}
+                        {{-- Columna 1: Episodio (reality) o Fecha (live) --}}
+                        @if($show->isReality())
+                        <td class="px-5 py-4">
+                            @if($rundown->episode_number || $rundown->episode_name)
+                                <div class="font-bold {{ $emitida ? 'text-gray-500' : 'text-pink-400' }}">
+                                    @if($rundown->episode_number)
+                                        <span class="font-mono text-xs bg-pink-900/30 px-1.5 py-0.5 rounded mr-1">
+                                            EP {{ $rundown->episode_number }}
+                                        </span>
+                                    @endif
+                                    {{ $rundown->episode_name }}
+                                </div>
+                                <div class="text-xs text-gray-500 mt-0.5">
+                                    {{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}
+                                </div>
+                            @else
+                                <div class="font-bold {{ $emitida ? 'text-gray-500' : 'text-white' }}">
+                                    {{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}
+                                </div>
+                                <div class="text-xs text-gray-600 italic">Sin nombre de episodio</div>
+                            @endif
+                        </td>
+
+                        {{-- Columna 2: Fecha completa (reality) --}}
+                        <td class="px-5 py-4">
+                            <div class="text-xs text-gray-500">
+                                {{ \Carbon\Carbon::parse($rundown->air_date)->translatedFormat('l') }}
+                            </div>
+                        </td>
+                        @else
+                        {{-- Columna 1: Fecha (live) --}}
                         <td class="px-5 py-4">
                             <div class="font-bold {{ $emitida ? 'text-gray-500' : 'text-white' }}">
                                 {{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}
@@ -123,12 +158,13 @@
                             </div>
                         </td>
 
-                        {{-- Hora --}}
+                        {{-- Columna 2: Hora (live) --}}
                         <td class="px-5 py-4">
                             <span class="font-mono {{ $emitida ? 'text-gray-600' : 'text-yellow-400' }} text-sm">
                                 {{ substr($rundown->air_time ?? '00:00:00', 0, 5) }}
                             </span>
                         </td>
+                        @endif
 
                         {{-- Estado --}}
                         <td class="px-5 py-4">
@@ -175,7 +211,7 @@
                                     @endif
 
                                     {{-- Editar fecha/hora --}}
-                                    <button onclick="abrirEditar({{ $rundown->id }}, '{{ $rundown->air_date }}', '{{ substr($rundown->air_time ?? '19:00:00', 0, 5) }}')"
+                                    <button onclick="abrirEditar({{ $rundown->id }}, '{{ $rundown->air_date }}', '{{ substr($rundown->air_time ?? '19:00:00', 0, 5) }}', '{{ $rundown->episode_number }}', '{{ addslashes($rundown->episode_name ?? '') }}')"
                                         class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs font-bold uppercase transition text-gray-300">
                                         🕐
                                     </button>
@@ -198,7 +234,7 @@
                                         📋 Duplicar
                                     </button>
                                     @if(auth()->user()->isAdmin())
-                                        <button onclick="abrirEditar({{ $rundown->id }}, '{{ $rundown->air_date }}', '{{ substr($rundown->air_time ?? '19:00:00', 0, 5) }}')"
+                                        <button onclick="abrirEditar({{ $rundown->id }}, '{{ $rundown->air_date }}', '{{ substr($rundown->air_time ?? '19:00:00', 0, 5) }}', '{{ $rundown->episode_number }}', '{{ addslashes($rundown->episode_name ?? '') }}')"
                                             class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs font-bold uppercase transition text-gray-300"
                                             title="Cambiar fecha/hora para desbloquear">
                                             🕐
@@ -267,28 +303,55 @@
 {{-- MODAL NUEVA ESCALETA --}}
 <div id="modal-nueva-escaleta" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50">
     <div class="bg-gray-800 rounded-xl border border-gray-700 w-full max-w-md p-6 shadow-2xl">
-        <h2 class="text-lg font-bold text-white mb-1">Nueva Escaleta</h2>
+        <h2 class="text-lg font-bold text-white mb-1">
+            {{ $show->isReality() ? '🎬 Nuevo Episodio' : '📋 Nueva Escaleta' }}
+        </h2>
         <p class="text-gray-500 text-sm mb-5">{{ $show->title }}</p>
         <form method="POST" action="/shows/{{ $show->id }}/rundowns">
             @csrf
             <div class="flex flex-col gap-4">
+
+                {{-- Fecha (siempre visible) --}}
                 <div>
-                    <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">Fecha de Emisión *</label>
+                    <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">
+                        {{ $show->isReality() ? 'Fecha de Grabación *' : 'Fecha de Emisión *' }}
+                    </label>
                     <input type="date" name="air_date" required value="{{ date('Y-m-d') }}"
                         class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-blue-500 focus:outline-none">
                 </div>
+
+                {{-- Hora de inicio — solo en vivo --}}
+                @if($show->isLive())
                 <div>
                     <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">Hora de Inicio *</label>
                     <input type="time" name="air_time" required value="19:00"
                         class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-blue-500 focus:outline-none">
                 </div>
+                @endif
+
+                {{-- Campos de episodio — solo en reality --}}
+                @if($show->isReality())
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">Episodio #</label>
+                        <input type="number" name="episode_number" min="1" placeholder="1"
+                            class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-pink-500 focus:outline-none">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">Nombre del Episodio</label>
+                        <input type="text" name="episode_name" placeholder="Ej: La Gran Final"
+                            class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-pink-500 focus:outline-none">
+                    </div>
+                </div>
+                @endif
+
             </div>
             <div class="flex justify-end gap-3 mt-6">
                 <button type="button" onclick="document.getElementById('modal-nueva-escaleta').classList.add('hidden')"
                     class="px-4 py-2 text-sm text-gray-400 hover:text-white transition">Cancelar</button>
                 <button type="submit"
-                    class="bg-blue-600 hover:bg-blue-500 px-5 py-2 rounded text-sm font-bold uppercase transition">
-                    Crear Escaleta
+                    class="{{ $show->isReality() ? 'bg-pink-600 hover:bg-pink-500' : 'bg-blue-600 hover:bg-blue-500' }} px-5 py-2 rounded text-sm font-bold uppercase transition">
+                    {{ $show->isReality() ? '🎬 Crear Episodio' : 'Crear Escaleta' }}
                 </button>
             </div>
         </form>
@@ -298,21 +361,41 @@
 {{-- MODAL EDITAR FECHA/HORA --}}
 <div id="modal-editar-escaleta" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50">
     <div class="bg-gray-800 rounded-xl border border-gray-700 w-full max-w-md p-6 shadow-2xl">
-        <h2 class="text-lg font-bold text-white mb-1">Editar Fecha y Hora</h2>
-        <p class="text-gray-500 text-sm mb-5">Cambia la fecha u hora de emisión de esta escaleta.</p>
+        <h2 class="text-lg font-bold text-white mb-1">
+            {{ $show->isReality() ? '✏️ Editar Episodio' : '✏️ Editar Fecha y Hora' }}
+        </h2>
+        <p class="text-gray-500 text-sm mb-5">{{ $show->title }}</p>
         <form method="POST" id="form-editar-escaleta" action="">
             @csrf
             <div class="flex flex-col gap-4">
                 <div>
-                    <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">Fecha de Emisión *</label>
+                    <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">
+                        {{ $show->isReality() ? 'Fecha de Grabación *' : 'Fecha de Emisión *' }}
+                    </label>
                     <input type="date" name="air_date" id="edit-air-date" required
                         class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-blue-500 focus:outline-none">
                 </div>
+                @if($show->isLive())
                 <div>
                     <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">Hora de Inicio *</label>
                     <input type="time" name="air_time" id="edit-air-time" required
                         class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-blue-500 focus:outline-none">
                 </div>
+                @endif
+                @if($show->isReality())
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">Episodio #</label>
+                        <input type="number" name="episode_number" id="edit-episode-number" min="1"
+                            class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-pink-500 focus:outline-none">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">Nombre del Episodio</label>
+                        <input type="text" name="episode_name" id="edit-episode-name"
+                            class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-pink-500 focus:outline-none">
+                    </div>
+                </div>
+                @endif
             </div>
             <div class="flex justify-end gap-3 mt-6">
                 <button type="button" onclick="document.getElementById('modal-editar-escaleta').classList.add('hidden')"
@@ -329,21 +412,41 @@
 {{-- MODAL DUPLICAR --}}
 <div id="modal-duplicar" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50">
     <div class="bg-gray-800 rounded-xl border border-gray-700 w-full max-w-md p-6 shadow-2xl">
-        <h2 class="text-lg font-bold text-white mb-1">Duplicar Escaleta</h2>
+        <h2 class="text-lg font-bold text-white mb-1">
+            {{ $show->isReality() ? '📋 Duplicar Episodio' : '📋 Duplicar Escaleta' }}
+        </h2>
         <p class="text-gray-500 text-sm mb-5">Se copiarán todos los bloques e ítems. El guion literario no se copia.</p>
         <form method="POST" id="form-duplicar" action="">
             @csrf
             <div class="flex flex-col gap-4">
                 <div>
-                    <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">Nueva Fecha de Emisión *</label>
+                    <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">
+                        {{ $show->isReality() ? 'Nueva Fecha de Grabación *' : 'Nueva Fecha de Emisión *' }}
+                    </label>
                     <input type="date" name="air_date" id="dup-air-date" required value="{{ date('Y-m-d') }}"
                         class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-blue-500 focus:outline-none">
                 </div>
+                @if($show->isLive())
                 <div>
                     <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">Hora de Inicio *</label>
                     <input type="time" name="air_time" id="dup-air-time" required value="19:00"
                         class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-blue-500 focus:outline-none">
                 </div>
+                @endif
+                @if($show->isReality())
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">Episodio #</label>
+                        <input type="number" name="episode_number" id="dup-episode-number" min="1"
+                            class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-pink-500 focus:outline-none">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">Nombre del Episodio</label>
+                        <input type="text" name="episode_name" id="dup-episode-name"
+                            class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-pink-500 focus:outline-none">
+                    </div>
+                </div>
+                @endif
             </div>
             <div class="flex justify-end gap-3 mt-6">
                 <button type="button" onclick="document.getElementById('modal-duplicar').classList.add('hidden')"
@@ -358,10 +461,15 @@
 </div>
 
 <script>
-    function abrirEditar(rundownId, airDate, airTime) {
+    function abrirEditar(rundownId, airDate, airTime, episodeNumber, episodeName) {
         document.getElementById('form-editar-escaleta').action = '/rundown/' + rundownId + '/update-datetime';
         document.getElementById('edit-air-date').value = airDate;
-        document.getElementById('edit-air-time').value = airTime;
+        const editTime = document.getElementById('edit-air-time');
+        if (editTime) editTime.value = airTime;
+        const editEpNum = document.getElementById('edit-episode-number');
+        if (editEpNum) editEpNum.value = episodeNumber || '';
+        const editEpName = document.getElementById('edit-episode-name');
+        if (editEpName) editEpName.value = episodeName || '';
         document.getElementById('modal-editar-escaleta').classList.remove('hidden');
     }
 

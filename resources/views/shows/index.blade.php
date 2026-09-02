@@ -44,14 +44,18 @@
                         
                         <a href="/shows/{{ $show->id }}" class="block p-5">
                             <div class="flex items-start justify-between mb-3">
-                                <div class="bg-blue-600/20 text-blue-400 p-2 rounded">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                                    </svg>
+                                <div class="{{ $show->isReality() ? 'bg-pink-600/20 text-pink-400' : 'bg-blue-600/20 text-blue-400' }} p-2 rounded text-lg leading-none">
+                                    {{ $show->productionIcon() }}
                                 </div>
-                                <span class="text-[10px] font-bold uppercase text-green-400 bg-green-400/10 px-2 py-1 rounded">
-                                    Activo
-                                </span>
+                                <div class="flex flex-col items-end gap-1">
+                                    <span class="text-[10px] font-bold uppercase text-green-400 bg-green-400/10 px-2 py-1 rounded">
+                                        Activo
+                                    </span>
+                                    <span class="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded
+                                        {{ $show->isReality() ? 'text-pink-400 bg-pink-900/30' : 'text-blue-400 bg-blue-900/20' }}">
+                                        {{ $show->productionLabel() }}
+                                    </span>
+                                </div>
                             </div>
                             <h3 class="text-lg font-bold text-white group-hover:text-blue-400 transition mb-1">
                                 {{ $show->title }}
@@ -76,7 +80,7 @@
                         {{-- Acciones --}}
                         @if(auth()->user()->isAdmin())
                         <div class="px-5 pb-4 flex gap-2">
-                            <button onclick="abrirEditar({{ $show->id }}, '{{ addslashes($show->title) }}', '{{ addslashes($show->channel ?? '') }}', '{{ addslashes($show->description ?? '') }}')"
+                            <button onclick="abrirEditar({{ $show->id }}, '{{ addslashes($show->title) }}', '{{ addslashes($show->channel ?? '') }}', '{{ addslashes($show->description ?? '') }}', '{{ $show->production_type }}')"
                                 class="text-xs text-gray-500 hover:text-white transition">
                                 ✏️ Editar
                             </button>
@@ -151,6 +155,23 @@
         <form method="POST" action="/shows">
             @csrf
             <div class="flex flex-col gap-4">
+
+                {{-- Tipo de producción --}}
+                <div>
+                    <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-2">Tipo de Producción *</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        @foreach($productionTypes as $pt)
+                        <label class="flex items-center gap-2 cursor-pointer border rounded px-3 py-2 transition
+                            border-gray-600 hover:border-blue-500 bg-gray-900 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-900/20">
+                            <input type="radio" name="production_type" value="{{ $pt['value'] }}"
+                                {{ $pt['value'] === 'live' ? 'checked' : '' }}
+                                class="accent-blue-500">
+                            <span class="text-sm">{{ $pt['icon'] }} {{ $pt['label'] }}</span>
+                        </label>
+                        @endforeach
+                    </div>
+                </div>
+
                 <div>
                     <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">Nombre del Programa *</label>
                     <input type="text" name="title" required placeholder="Ej: Noticiero Central"
@@ -188,6 +209,22 @@
         <form method="POST" id="form-editar-show" action="">
             @csrf
             <div class="flex flex-col gap-4">
+
+                {{-- Tipo de producción --}}
+                <div>
+                    <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-2">Tipo de Producción *</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        @foreach($productionTypes as $pt)
+                        <label class="flex items-center gap-2 cursor-pointer border rounded px-3 py-2 transition
+                            border-gray-600 hover:border-blue-500 bg-gray-900 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-900/20">
+                            <input type="radio" name="production_type" value="{{ $pt['value'] }}"
+                                class="accent-blue-500 edit-production-type">
+                            <span class="text-sm">{{ $pt['icon'] }} {{ $pt['label'] }}</span>
+                        </label>
+                        @endforeach
+                    </div>
+                </div>
+
                 <div>
                     <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">Nombre del Programa *</label>
                     <input type="text" name="title" id="edit-title" required
@@ -219,11 +256,17 @@
 </div>
 
 <script>
-    function abrirEditar(id, title, channel, description) {
+    function abrirEditar(id, title, channel, description, productionType) {
         document.getElementById('edit-title').value = title;
         document.getElementById('edit-channel').value = channel;
         document.getElementById('edit-description').value = description;
         document.getElementById('form-editar-show').action = '/shows/' + id + '/update';
+
+        // Seleccionar el radio correcto
+        document.querySelectorAll('.edit-production-type').forEach(radio => {
+            radio.checked = radio.value === productionType;
+        });
+
         document.getElementById('modal-editar-show').classList.remove('hidden');
     }
 
