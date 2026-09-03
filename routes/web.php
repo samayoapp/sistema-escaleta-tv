@@ -51,6 +51,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/rundown/{id}/prompter',            [RundownController::class, 'prompter']);
     Route::get('/rundown/{id}/pdf',                 [RundownController::class, 'generatePdf']);
     Route::get('/rundown/{id}/pdf-escaleta',        [RundownController::class, 'generatePdfEscaleta']);
+    Route::get('/rundown/{id}/export',              [RundownController::class, 'exportRundown']);
+    Route::post('/import/rundown',                  [RundownController::class, 'importRundown'])
+        ->middleware('role:admin');
 
     // ── Bloques ───────────────────────────────────────────────────────────────
     Route::post('/block/{id}/update',               [RundownController::class, 'updateBlock'])

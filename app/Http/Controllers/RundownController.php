@@ -306,6 +306,21 @@ public function editSegment($id)
     }
     // ─── Export / Import ──────────────────────────────────────────────────────
 
+    /**
+     * Convierte URLs en texto plano a <a href> clicables para DomPDF.
+     */
+    public static function linkify(?string $text): string
+    {
+        if (!$text) return '';
+        $escaped = e($text);
+        $pattern = '~(https?://[^\s<>"\']+)~i';
+        return preg_replace(
+            $pattern,
+            '<a href="$1" style="color:#2563eb;text-decoration:underline;">$1</a>',
+            $escaped
+        );
+    }
+
     public function exportRundown($id)
     {
         $rundown = Rundown::with([
@@ -326,7 +341,7 @@ public function editSegment($id)
             'rundown' => [
                 'air_date'       => $rundown->air_date,
                 'air_time'       => $rundown->air_time,
-                'status'         => 'borrador', // siempre importar como borrador
+                'status'         => 'borrador',
                 'episode_name'   => $rundown->episode_name,
                 'episode_number' => $rundown->episode_number,
                 'blocks'         => $rundown->blocks->map(fn($block) => [
@@ -364,7 +379,6 @@ public function editSegment($id)
         $contents = file_get_contents($request->file('file')->getRealPath());
         $data     = json_decode($contents, true);
 
-        // Validación básica del formato
         if (!isset($data['ronup_version'], $data['show'], $data['rundown'])) {
             return back()->withErrors(['file' => 'El archivo no es una escaleta RONUP válida.']);
         }
@@ -372,7 +386,6 @@ public function editSegment($id)
         $showData    = $data['show'];
         $rundownData = $data['rundown'];
 
-        // Buscar show existente por título exacto — si no existe, crearlo
         $show = \App\Models\Show::firstOrCreate(
             ['title' => $showData['title']],
             [
@@ -383,7 +396,6 @@ public function editSegment($id)
             ]
         );
 
-        // Crear el rundown
         $rundown = Rundown::create([
             'show_id'        => $show->id,
             'air_date'       => $rundownData['air_date'],
@@ -393,16 +405,15 @@ public function editSegment($id)
             'episode_number' => $rundownData['episode_number'] ?? null,
         ]);
 
-        // Crear bloques y segmentos
         foreach ($rundownData['blocks'] as $blockData) {
-            $block = Block::create([
+            $block = \App\Models\Block::create([
                 'rundown_id'  => $rundown->id,
                 'title'       => $blockData['title'] ?? '',
                 'order_index' => $blockData['order_index'],
             ]);
 
             foreach ($blockData['segments'] as $segData) {
-                Segment::create([
+                \App\Models\Segment::create([
                     'rundown_id'       => $rundown->id,
                     'block_id'         => $block->id,
                     'title'            => $segData['title'],
