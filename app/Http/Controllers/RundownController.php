@@ -231,7 +231,7 @@ public function editSegment($id)
 
         $filename = 'guion-' . str($rundown->show->title)->slug() . '-' . $rundown->air_date . '.pdf';
 
-        return $pdf->download($filename);
+        return $pdf->stream($filename);
     }
 
     public function generatePdfEscaleta($id)
@@ -247,7 +247,7 @@ public function editSegment($id)
 
         $filename = 'escaleta-' . str($rundown->show->title)->slug() . '-' . $rundown->air_date . '.pdf';
 
-        return $pdf->download($filename);
+        return $pdf->stream($filename);
     }
 
     public function toggleScript($id)
