@@ -304,6 +304,123 @@ public function editSegment($id)
                 'focusSegment' => $newSegment->id  // ← ID exacto del nuevo ítem
             ])]);
     }
+    // ─── Export / Import ──────────────────────────────────────────────────────
+
+    public function exportRundown($id)
+    {
+        $rundown = Rundown::with([
+            'show',
+            'blocks'          => fn($q) => $q->orderBy('order_index'),
+            'blocks.segments' => fn($q) => $q->orderBy('order_index'),
+        ])->findOrFail($id);
+
+        $payload = [
+            'ronup_version' => '1.0',
+            'exported_at'   => now()->toIso8601String(),
+            'show' => [
+                'title'           => $rundown->show->title,
+                'channel'         => $rundown->show->channel,
+                'description'     => $rundown->show->description,
+                'production_type' => $rundown->show->production_type ?? 'live',
+            ],
+            'rundown' => [
+                'air_date'       => $rundown->air_date,
+                'air_time'       => $rundown->air_time,
+                'status'         => 'borrador', // siempre importar como borrador
+                'episode_name'   => $rundown->episode_name,
+                'episode_number' => $rundown->episode_number,
+                'blocks'         => $rundown->blocks->map(fn($block) => [
+                    'title'       => $block->title,
+                    'order_index' => $block->order_index,
+                    'segments'    => $block->segments->map(fn($seg) => [
+                        'title'            => $seg->title,
+                        'type'             => $seg->type,
+                        'duration_seconds' => $seg->duration_seconds,
+                        'order_index'      => $seg->order_index,
+                        'has_script'       => $seg->has_script,
+                        'in_prompter'      => $seg->in_prompter,
+                        'script_content'   => $seg->script_content,
+                        'production_notes' => $seg->production_notes,
+                    ])->values(),
+                ])->values(),
+            ],
+        ];
+
+        $showSlug    = str($rundown->show->title)->slug();
+        $date        = $rundown->air_date;
+        $episodePart = $rundown->episode_number ? '-ep' . $rundown->episode_number : '';
+        $filename    = "ronup-{$showSlug}{$episodePart}-{$date}.json";
+
+        return response()->json($payload, 200, [
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Content-Type'        => 'application/json',
+        ]);
+    }
+
+    public function importRundown(Request $request)
+    {
+        $request->validate(['file' => 'required|file|mimes:json|max:2048']);
+
+        $contents = file_get_contents($request->file('file')->getRealPath());
+        $data     = json_decode($contents, true);
+
+        // Validación básica del formato
+        if (!isset($data['ronup_version'], $data['show'], $data['rundown'])) {
+            return back()->withErrors(['file' => 'El archivo no es una escaleta RONUP válida.']);
+        }
+
+        $showData    = $data['show'];
+        $rundownData = $data['rundown'];
+
+        // Buscar show existente por título exacto — si no existe, crearlo
+        $show = \App\Models\Show::firstOrCreate(
+            ['title' => $showData['title']],
+            [
+                'channel'         => $showData['channel'] ?? null,
+                'description'     => $showData['description'] ?? null,
+                'production_type' => $showData['production_type'] ?? 'live',
+                'status'          => 'active',
+            ]
+        );
+
+        // Crear el rundown
+        $rundown = Rundown::create([
+            'show_id'        => $show->id,
+            'air_date'       => $rundownData['air_date'],
+            'air_time'       => $rundownData['air_time'] ?? '00:00:00',
+            'status'         => 'borrador',
+            'episode_name'   => $rundownData['episode_name'] ?? null,
+            'episode_number' => $rundownData['episode_number'] ?? null,
+        ]);
+
+        // Crear bloques y segmentos
+        foreach ($rundownData['blocks'] as $blockData) {
+            $block = Block::create([
+                'rundown_id'  => $rundown->id,
+                'title'       => $blockData['title'] ?? '',
+                'order_index' => $blockData['order_index'],
+            ]);
+
+            foreach ($blockData['segments'] as $segData) {
+                Segment::create([
+                    'rundown_id'       => $rundown->id,
+                    'block_id'         => $block->id,
+                    'title'            => $segData['title'],
+                    'type'             => $segData['type'],
+                    'duration_seconds' => $segData['duration_seconds'],
+                    'order_index'      => $segData['order_index'],
+                    'has_script'       => $segData['has_script'] ?? false,
+                    'in_prompter'      => $segData['in_prompter'] ?? false,
+                    'script_content'   => $segData['script_content'] ?? null,
+                    'production_notes' => $segData['production_notes'] ?? null,
+                ]);
+            }
+        }
+
+        return redirect('/rundown/' . $rundown->id)
+            ->with('success', 'Escaleta importada correctamente.');
+    }
+
     // Toggle in_prompter
     public function togglePrompter($id)
     {

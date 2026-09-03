@@ -37,6 +37,10 @@
         </div>
         <div class="flex gap-2">
             @if(auth()->user()->isAdmin())
+            <button onclick="document.getElementById('modal-importar').classList.remove('hidden')"
+                class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded text-sm font-bold uppercase tracking-widest transition flex items-center gap-2 text-green-400">
+                📥 Importar
+            </button>
             <button onclick="document.getElementById('modal-editar-show').classList.remove('hidden')"
                 class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded text-sm font-bold uppercase tracking-widest transition flex items-center gap-2 text-gray-300">
                 ✏️ Editar Show
@@ -194,6 +198,13 @@
                                         ? 'bg-gray-700 hover:bg-gray-600 text-gray-400'
                                         : 'bg-blue-600 hover:bg-blue-500 text-white' }}">
                                     {{ $emitida ? '👁 Ver' : '✏️ Abrir' }}
+                                </a>
+
+                                {{-- Exportar JSON --}}
+                                <a href="/rundown/{{ $rundown->id }}/export"
+                                    title="Exportar escaleta como JSON"
+                                    class="bg-gray-700 hover:bg-green-800 px-3 py-1 rounded text-xs font-bold uppercase transition text-green-400">
+                                    📤
                                 </a>
 
                                 @if(!$emitida)
@@ -522,6 +533,60 @@
         // Los 403 los captura el wrapper de fetch en navbar.blade.php
     }
 </script>
+
+
+{{-- MODAL IMPORTAR ESCALETA --}}
+<div id="modal-importar" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+     onclick="if(event.target===this) this.classList.add('hidden')">
+    <div class="bg-gray-800 rounded-xl border border-gray-700 w-full max-w-md p-6 shadow-2xl">
+        <div class="flex items-center justify-between mb-5">
+            <div>
+                <h2 class="text-lg font-bold text-white">📥 Importar Escaleta</h2>
+                <p class="text-xs text-gray-500 mt-1">Sube un archivo .json exportado desde RONUP</p>
+            </div>
+            <button onclick="document.getElementById('modal-importar').classList.add('hidden')"
+                class="text-gray-600 hover:text-white transition text-sm">✕</button>
+        </div>
+
+        <form method="POST" action="/import/rundown" enctype="multipart/form-data">
+            @csrf
+            <div class="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-green-500 transition"
+                 onclick="document.getElementById('import-file').click()"
+                 id="drop-zone">
+                <div class="text-3xl mb-2">📄</div>
+                <p class="text-sm text-gray-400" id="import-label">
+                    Haz clic para seleccionar un archivo <span class="text-green-400 font-bold">.json</span>
+                </p>
+                <p class="text-xs text-gray-600 mt-1">Exportado desde cualquier instalación de RONUP</p>
+                <input type="file" id="import-file" name="file" accept=".json"
+                    class="hidden"
+                    onchange="document.getElementById('import-label').textContent = this.files[0]?.name || 'Seleccionar archivo'">
+            </div>
+
+            @if($errors->any())
+                <div class="mt-3 text-xs text-red-400 bg-red-900/20 border border-red-800 rounded px-3 py-2">
+                    {{ $errors->first('file') }}
+                </div>
+            @endif
+
+            <div class="bg-gray-900/50 border border-gray-700 rounded p-3 mt-4 text-xs text-gray-500 leading-relaxed">
+                <span class="text-gray-400 font-bold">¿Qué pasa al importar?</span><br>
+                — Si el Show <strong class="text-gray-300">ya existe</strong> (mismo nombre), la escaleta se agrega al show existente.<br>
+                — Si <strong class="text-gray-300">no existe</strong>, se crea el show automáticamente.<br>
+                — La escaleta siempre se importa como <span class="text-yellow-400">borrador</span>.
+            </div>
+
+            <div class="flex justify-end gap-3 mt-5">
+                <button type="button" onclick="document.getElementById('modal-importar').classList.add('hidden')"
+                    class="px-4 py-2 text-sm text-gray-400 hover:text-white transition">Cancelar</button>
+                <button type="submit"
+                    class="bg-green-600 hover:bg-green-500 px-5 py-2 rounded text-sm font-bold uppercase transition">
+                    📥 Importar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 
 </body>
 </html>
