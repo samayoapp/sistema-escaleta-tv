@@ -181,7 +181,7 @@
                     <option value="{{ $st['value'] }}"
                         {{ $segment->type === $st['value'] ? 'selected' : '' }}
                         class="bg-gray-800 {{ $st['color'] }}">
-                        {{ $st['label'] }}
+                        {{ $st['icon'] ?? '' }} {{ $st['label'] }}
                     </option>
                 @endforeach
             </select>

@@ -95,14 +95,19 @@ public function editSegment($id)
 
     public function addSegment(Request $request, $blockId)
     {
-        $block = Block::findOrFail($blockId);
+        $block   = Block::findOrFail($blockId);
+        $rundown = Rundown::with('show')->findOrFail($block->rundown_id);
+
+        $defaultType = \App\Config\SegmentTypes::forType(
+            $rundown->show->production_type ?? 'live'
+        )[0]['value'] ?? 'PRESENTACION';
 
         Segment::create([
             'rundown_id'       => $block->rundown_id,
             'block_id'         => $block->id,
             'order_index'      => $block->segments()->count() + 1,
             'title'            => 'NUEVO ÍTEM',
-            'type'             => 'PRESENTACION',
+            'type'             => $defaultType,
             'duration_seconds' => 60,
         ]);
 
@@ -266,18 +271,27 @@ public function editSegment($id)
     {
         if ($segmentId == 0) {
             $block = Block::findOrFail($request->block_id);
+        } else {
+            $after = Segment::findOrFail($segmentId);
+            $block = Block::findOrFail($after->block_id);
+        }
+
+        $rundown     = Rundown::with('show')->findOrFail($block->rundown_id);
+        $defaultType = \App\Config\SegmentTypes::forType(
+            $rundown->show->production_type ?? 'live'
+        )[0]['value'] ?? 'PRESENTACION';
+
+        if ($segmentId == 0) {
             $block->segments()->increment('order_index');
             $newSegment = Segment::create([
                 'rundown_id'       => $block->rundown_id,
                 'block_id'         => $block->id,
                 'order_index'      => 1,
                 'title'            => 'NUEVO ÍTEM',
-                'type'             => 'PRESENTACION',
+                'type'             => $defaultType,
                 'duration_seconds' => 60,
             ]);
         } else {
-            $after = Segment::findOrFail($segmentId);
-            $block = Block::findOrFail($after->block_id);
             $block->segments()
                 ->where('order_index', '>', $after->order_index)
                 ->increment('order_index');
@@ -286,7 +300,7 @@ public function editSegment($id)
                 'block_id'         => $after->block_id,
                 'order_index'      => $after->order_index + 1,
                 'title'            => 'NUEVO ÍTEM',
-                'type'             => 'PRESENTACION',
+                'type'             => $defaultType,
                 'duration_seconds' => 60,
             ]);
         }
