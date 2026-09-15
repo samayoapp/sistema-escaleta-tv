@@ -13,6 +13,10 @@
     <div class="flex items-center gap-3">
 
         @if(auth()->user()->isAdmin())
+            <a href="/admin/config"
+               class="text-gray-500 hover:text-white text-xs uppercase tracking-widest transition hidden sm:block">
+                ⚙️ Config
+            </a>
             <a href="/admin/usuarios"
                class="text-gray-500 hover:text-white text-xs uppercase tracking-widest transition hidden sm:block">
                 👥 Usuarios

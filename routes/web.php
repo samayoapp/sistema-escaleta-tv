@@ -78,6 +78,18 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/segment/{id}',                  [RundownController::class, 'deleteSegment'])
         ->middleware('role:admin,editor');
 
+    // ── Admin: Configuración Global (solo Admin) ──────────────────────────────
+    Route::get('/admin/config',                                    [\App\Http\Controllers\ConfigController::class, 'index'])
+        ->middleware('role:admin');
+    Route::post('/admin/config/segment-types',                     [\App\Http\Controllers\ConfigController::class, 'storeSegmentType'])
+        ->middleware('role:admin');
+    Route::post('/admin/config/segment-types/{id}/update',         [\App\Http\Controllers\ConfigController::class, 'updateSegmentType'])
+        ->middleware('role:admin');
+    Route::post('/admin/config/segment-types/{id}/toggle',         [\App\Http\Controllers\ConfigController::class, 'toggleSegmentType'])
+        ->middleware('role:admin');
+    Route::delete('/admin/config/segment-types/{id}/delete',       [\App\Http\Controllers\ConfigController::class, 'destroySegmentType'])
+        ->middleware('role:admin');
+
     // ── Admin: Usuarios (solo Admin) ──────────────────────────────────────────
     Route::get('/admin/usuarios',           [UserController::class, 'index'])
         ->middleware('role:admin');

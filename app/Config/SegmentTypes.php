@@ -3,21 +3,20 @@
 namespace App\Config;
 
 /**
- * Catálogo central de tipos de segmento por tipo de producción.
- *
- * Para agregar un nuevo production_type en el futuro:
- *   1. Agregar una entrada en TYPES con clave = production_type
- *   2. Definir sus tipos con: value, label, color (Tailwind), border_color (hex para PDF)
- *   3. El sistema lo toma automáticamente en el selector y en los PDFs.
+ * Catálogo de tipos de segmento.
+ * Lee de la tabla `segment_types` en BD.
+ * Si la tabla no existe aún (primera instalación), usa el array de fallback.
  */
 class SegmentTypes
 {
-    /**
-     * Todos los tipos disponibles agrupados por production_type.
-     */
-    const TYPES = [
+    public const TYPES = [
+        'type_1' => 'Nombre del tipo 1',
+        'type_2' => 'Nombre del tipo 2',
+    ];
 
-        // ── PROGRAMA EN VIVO ──────────────────────────────────────────────
+
+    // ── Fallback estático (solo si la BD no está disponible) ──────────────────
+    const FALLBACK = [
         'live' => [
             'label' => 'Programa en Vivo',
             'icon'  => '📡',
@@ -31,8 +30,6 @@ class SegmentTypes
                 ['value' => 'CIERRE',          'label' => 'CIERRE',       'icon' => '🏁', 'color' => 'text-orange-400', 'badge_bg' => 'bg-orange-900/30', 'border' => '#f97316'],
             ],
         ],
-
-        // ── REALITY DE TV ────────────────────────────────────────────────
         'reality' => [
             'label' => 'Reality de TV',
             'icon'  => '🎬',
@@ -48,34 +45,57 @@ class SegmentTypes
                 ['value' => 'CIERRE',           'label' => 'CIERRE',        'icon' => '🏁', 'color' => 'text-blue-400',   'badge_bg' => 'bg-blue-900/30',   'border' => '#3b82f6'],
             ],
         ],
-
-        // ── PRÓXIMOS — descomentar y completar cuando se necesiten ────────
-        // 'documentary' => [ 'label' => 'Documental', 'icon' => '🎥', 'segments' => [...] ],
-        // 'talk_show'   => [ 'label' => 'Talk Show',  'icon' => '🎤', 'segments' => [...] ],
-        // 'news'        => [ 'label' => 'Noticiero',  'icon' => '📰', 'segments' => [...] ],
-
     ];
+
+    // ── Cache en memoria por request ──────────────────────────────────────────
+    private static array $_cache = [];
 
     /**
      * Retorna los tipos de segmento para un production_type dado.
-     * Si no existe, devuelve los de 'live' como fallback.
+     * Lee de BD; fallback al array si la tabla no existe.
      */
     public static function forType(string $productionType): array
     {
-        return self::TYPES[$productionType]['segments'] ?? self::TYPES['live']['segments'];
+        if (isset(self::$_cache[$productionType])) {
+            return self::$_cache[$productionType];
+        }
+
+        try {
+            $rows = \App\Models\SegmentType::active()
+                ->forType($productionType)
+                ->orderBy('order_index')
+                ->get();
+
+            if ($rows->isEmpty()) {
+                // Sin datos en BD → fallback
+                return self::FALLBACK[$productionType]['segments']
+                    ?? self::FALLBACK['live']['segments'];
+            }
+
+            $result = $rows->map(fn($r) => [
+                'value'    => $r->value,
+                'label'    => $r->label,
+                'icon'     => $r->icon,
+                'color'    => $r->tailwindTextColor(),
+                'badge_bg' => 'bg-gray-700/30',
+                'border'   => $r->color_hex,
+            ])->toArray();
+
+            self::$_cache[$productionType] = $result;
+            return $result;
+
+        } catch (\Exception $e) {
+            // Tabla no existe todavía → fallback
+            return self::FALLBACK[$productionType]['segments']
+                ?? self::FALLBACK['live']['segments'];
+        }
     }
 
-    /**
-     * Retorna solo los values (para validación en el controller).
-     */
     public static function valuesForType(string $productionType): array
     {
         return array_column(self::forType($productionType), 'value');
     }
 
-    /**
-     * Retorna el label de un value específico para un production_type.
-     */
     public static function label(string $productionType, string $value): string
     {
         foreach (self::forType($productionType) as $type) {
@@ -84,15 +104,13 @@ class SegmentTypes
         return $value;
     }
 
-    /**
-     * Retorna todos los production_types disponibles (para el selector de shows).
-     */
     public static function productionTypes(): array
     {
-        return array_map(fn($key, $val) => [
-            'value' => $key,
-            'label' => $val['label'],
-            'icon'  => $val['icon'],
-        ], array_keys(self::TYPES), self::TYPES);
+        // Tipos de producción disponibles — por ahora estáticos
+        // En el futuro vendrán de BD también
+        return [
+            ['value' => 'live',    'label' => 'Programa en Vivo', 'icon' => '📡'],
+            ['value' => 'reality', 'label' => 'Reality de TV',    'icon' => '🎬'],
+        ];
     }
 }
