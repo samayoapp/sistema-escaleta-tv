@@ -170,8 +170,20 @@ class ShowController extends Controller
     {
         $rundown = Rundown::findOrFail($id);
         $showId  = $rundown->show_id;
+
+        // Seguridad: verificar que el rundown pertenece a un show válido
+        // antes de eliminar cualquier cosa
+        if (!$showId || !\App\Models\Show::find($showId)) {
+            return response()->json(['error' => 'Show no encontrado'], 422);
+        }
+
+        // Eliminar solo el rundown — bloques y segmentos se eliminan
+        // por cascade en BD (blocks->cascade->segments)
         $rundown->delete();
-        return redirect('/shows/' . $showId);
+
+        // Devolver JSON para que fetchEliminar en la vista
+        // recargue la página sin seguir redirects
+        return response()->json(['ok' => true, 'show_id' => $showId]);
     }
 
     public function destroy($id)
