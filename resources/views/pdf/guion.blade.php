@@ -199,14 +199,7 @@
             color: #94a3b8;
             white-space: nowrap;
         }
-
-        .tipo-VIVO            { background: #fee2e2; color: #b91c1c; }
-        .tipo-VTR             { background: #dcfce7; color: #15803d; }
-        .tipo-OFF             { background: #f3e8ff; color: #7e22ce; }
-        .tipo-CORTE_COMERCIAL { background: #fef9c3; color: #854d0e; }
-        .tipo-NOTA_SECA       { background: #f1f5f9; color: #475569; }
-        .tipo-PRESENTACION    { background: #dbeafe; color: #1d4ed8; }
-        .tipo-CIERRE          { background: #ffedd5; color: #c2410c; }
+        .seg-tipo-badge { background: #f1f5f9; color: #475569; }
 
         /* ── GUION LITERARIO ── */
         .guion-wrapper {
@@ -266,15 +259,12 @@
     $totalMin     = floor($totalSeconds / 60);
     $totalSeg     = $totalSeconds % 60;
 
-    $typeLabels = [
-        'VIVO'            => 'VIVO',
-        'VTR'             => 'VTR',
-        'OFF'             => 'OFF',
-        'CORTE_COMERCIAL' => 'COMERCIAL',
-        'NOTA_SECA'       => 'NOTA SECA',
-        'PRESENTACION'    => 'PRESENTACIÓN',
-        'CIERRE'          => 'CIERRE',
-    ];
+    $productionType  = $rundown->show->production_type ?? 'live';
+    $segmentTypesCfg = \App\Config\SegmentTypes::forType($productionType);
+    $typeLabels      = collect($segmentTypesCfg)->pluck('label', 'value')->toArray();
+    $typeBorders     = collect($segmentTypesCfg)->pluck('border', 'value')->toArray();
+    $isCommercialType = fn($type) => str_contains(strtolower($type), 'comercial');
+
 @endphp
 
 {{-- HEADER FIJO --}}
@@ -351,7 +341,7 @@
     @foreach($block->segments->sortBy('order_index') as $segIndex => $segment)
     @php $segNum = $blockLetra . '.' . ($segIndex + 1); @endphp
 
-        @if($segment->type === 'CORTE_COMERCIAL')
+        @if($isCommercialType($segment->type))
             <div class="corte-comercial">
                 ── {{ $segNum }} &nbsp;·&nbsp; {{ $segment->title }} ──
             </div>
@@ -364,7 +354,8 @@
             <div class="segmento">
                 <div class="segmento-cabecera">
                     <span class="seg-codigo">{{ $segNum }}</span>
-                    <span class="seg-tipo tipo-{{ $segment->type }}">
+                    @php $borderColor = $typeBorders[$segment->type] ?? '#94a3b8'; @endphp
+                    <span class="seg-tipo" style="background:{{ $borderColor }}22; color:{{ $borderColor }}; border:1px solid {{ $borderColor }}44">
                         {{ $typeLabels[$segment->type] ?? $segment->type }}
                     </span>
                     <span class="seg-titulo">{{ $segment->title }}</span>

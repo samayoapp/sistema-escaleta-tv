@@ -145,13 +145,7 @@
         .seg-r.impar td { background: #ffffff; }
 
         /* Borde izquierdo — ahora en primera celda (código) */
-        .seg-VIVO            td:first-child { border-left: 4px solid #ef4444; }
-        .seg-VTR             td:first-child { border-left: 4px solid #22c55e; }
-        .seg-OFF             td:first-child { border-left: 4px solid #a855f7; }
-        .seg-CORTE_COMERCIAL td:first-child { border-left: 4px solid #eab308; }
-        .seg-NOTA_SECA       td:first-child { border-left: 4px solid #94a3b8; }
-        .seg-PRESENTACION    td:first-child { border-left: 4px solid #3b82f6; }
-        .seg-CIERRE          td:first-child { border-left: 4px solid #f97316; }
+        .seg-r td:first-child { border-left: 4px solid #94a3b8; }
 
         .td-cod {
             font-family: 'DejaVu Sans Mono', monospace;
@@ -171,13 +165,7 @@
             font-size: 7pt; font-weight: bold;
             text-transform: uppercase; padding: 2px 5px;
         }
-        .badge-VIVO            { background:#fee2e2; color:#b91c1c; }
-        .badge-VTR             { background:#dcfce7; color:#15803d; }
-        .badge-OFF             { background:#f3e8ff; color:#7e22ce; }
-        .badge-CORTE_COMERCIAL { background:#fef9c3; color:#854d0e; }
-        .badge-NOTA_SECA       { background:#f1f5f9; color:#475569; }
-        .badge-PRESENTACION    { background:#dbeafe; color:#1d4ed8; }
-        .badge-CIERRE          { background:#ffedd5; color:#c2410c; }
+
 
         .fila-com td {
             background: #fffbeb !important;
@@ -216,15 +204,11 @@
         return sprintf('%02d:%02d:%02d', floor($s / 3600), floor(($s % 3600) / 60), $s % 60);
     }
 
-    $typeLabels = [
-        'VIVO'            => 'VIVO',
-        'VTR'             => 'VTR',
-        'OFF'             => 'OFF',
-        'CORTE_COMERCIAL' => 'COMERCIAL',
-        'NOTA_SECA'       => 'NOTA SECA',
-        'PRESENTACION'    => 'PRESENTACIÓN',
-        'CIERRE'          => 'CIERRE',
-    ];
+    $productionType = $rundown->show->production_type ?? 'live';
+    $segmentTypesCfg = \App\Config\SegmentTypes::forType($productionType);
+    $typeLabels = collect($segmentTypesCfg)->pluck('label', 'value')->toArray();
+    $typeBorders = collect($segmentTypesCfg)->pluck('border', 'value')->toArray();
+    $isCommercialType = fn($type) => str_contains(strtolower($type), 'comercial');
 @endphp
 
 {{-- HEADER FIJO --}}
@@ -336,7 +320,7 @@
             $rowClass   = ($globalRow % 2 === 0) ? 'par' : 'impar';
         @endphp
 
-            @if($segment->type === 'CORTE_COMERCIAL')
+            @if($isCommercialType($segment->type))
             <tr class="fila-com">
                 <td>{{ $segNum }}</td>
                 <td>COM.</td>
@@ -345,12 +329,14 @@
                 <td class="td-not" style="text-align:left; font-style:italic; color:#92400e;">{!! \App\Http\Controllers\RundownController::linkify($segment->production_notes) !!}</td>
             </tr>
             @else
-            <tr class="seg-r {{ $rowClass }} seg-{{ $segment->type }}">
-                <td class="td-cod">{{ $segNum }}</td>
+            @php $borderColor = $typeBorders[$segment->type] ?? '#94a3b8'; @endphp
+            <tr class="seg-r {{ $rowClass }}" style="border-left: 4px solid {{ $borderColor }}">
+                <td class="td-cod" style="border-left: 4px solid {{ $borderColor }}">{{ $segNum }}</td>
                 <td class="td-tipo">
-                    <span class="badge badge-{{ $segment->type }}">
+                    <span class="badge" style="background:{{ $borderColor }}22; color:{{ $borderColor }}; border:1px solid {{ $borderColor }}44">
                         {{ $typeLabels[$segment->type] ?? $segment->type }}
                     </span>
+                </td>
                 </td>
                 <td class="td-tit">{{ $segment->title }}</td>
                 <td class="td-dur">{{ escFmtDur($segment->duration_seconds) }}</td>
