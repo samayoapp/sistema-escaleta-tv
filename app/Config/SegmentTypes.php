@@ -4,18 +4,12 @@ namespace App\Config;
 
 /**
  * Catálogo de tipos de segmento.
- * Lee de la tabla `segment_types` en BD.
- * Si la tabla no existe aún (primera instalación), usa el array de fallback.
+ * Lee de la relación ProductionType → pivot → SegmentType en BD.
+ * Fallback al array si la BD no está disponible.
  */
 class SegmentTypes
 {
-    public const TYPES = [
-        'type_1' => 'Nombre del tipo 1',
-        'type_2' => 'Nombre del tipo 2',
-    ];
-
-
-    // ── Fallback estático (solo si la BD no está disponible) ──────────────────
+    // ── Fallback estático ─────────────────────────────────────────────────────
     const FALLBACK = [
         'live' => [
             'label' => 'Programa en Vivo',
@@ -47,12 +41,11 @@ class SegmentTypes
         ],
     ];
 
-    // ── Cache en memoria por request ──────────────────────────────────────────
     private static array $_cache = [];
 
     /**
-     * Retorna los tipos de segmento para un production_type dado.
-     * Lee de BD; fallback al array si la tabla no existe.
+     * Retorna los tipos de segmento activos para un production_type (string value).
+     * Lee de la pivote production_type_segment_type via el modelo ProductionType.
      */
     public static function forType(string $productionType): array
     {
@@ -61,13 +54,16 @@ class SegmentTypes
         }
 
         try {
-            $rows = \App\Models\SegmentType::active()
-                ->forType($productionType)
-                ->orderBy('order_index')
-                ->get();
+            $pt = \App\Models\ProductionType::findByValue($productionType);
+
+            if (!$pt) {
+                return self::FALLBACK[$productionType]['segments']
+                    ?? self::FALLBACK['live']['segments'];
+            }
+
+            $rows = $pt->activeSegmentTypes()->get();
 
             if ($rows->isEmpty()) {
-                // Sin datos en BD → fallback
                 return self::FALLBACK[$productionType]['segments']
                     ?? self::FALLBACK['live']['segments'];
             }
@@ -85,7 +81,6 @@ class SegmentTypes
             return $result;
 
         } catch (\Exception $e) {
-            // Tabla no existe todavía → fallback
             return self::FALLBACK[$productionType]['segments']
                 ?? self::FALLBACK['live']['segments'];
         }
@@ -104,10 +99,32 @@ class SegmentTypes
         return $value;
     }
 
+    /**
+     * Retorna todos los production_types activos desde BD.
+     * Fallback al array si la tabla no existe.
+     */
     public static function productionTypes(): array
     {
-        // Tipos de producción disponibles — por ahora estáticos
-        // En el futuro vendrán de BD también
+        try {
+            $rows = \App\Models\ProductionType::active()->get();
+
+            if ($rows->isEmpty()) {
+                return self::_fallbackProductionTypes();
+            }
+
+            return $rows->map(fn($r) => [
+                'value' => $r->value,
+                'label' => $r->label,
+                'icon'  => $r->icon,
+            ])->toArray();
+
+        } catch (\Exception $e) {
+            return self::_fallbackProductionTypes();
+        }
+    }
+
+    private static function _fallbackProductionTypes(): array
+    {
         return [
             ['value' => 'live',    'label' => 'Programa en Vivo', 'icon' => '📡'],
             ['value' => 'reality', 'label' => 'Reality de TV',    'icon' => '🎬'],

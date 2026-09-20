@@ -3,22 +3,34 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class SegmentType extends Model
 {
     protected $fillable = [
-        'production_type',
         'value',
         'label',
         'icon',
         'color_hex',
         'order_index',
         'active',
+        // production_type queda en la tabla por compatibilidad
+        // pero ya no se usa para la lógica principal
     ];
 
     protected $casts = [
         'active' => 'boolean',
     ];
+
+    // ── Relaciones ────────────────────────────────────────────────────────────
+
+    public function productionTypes(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            ProductionType::class,
+            'production_type_segment_type'
+        )->withPivot('active', 'order_index')->withTimestamps();
+    }
 
     // ── Scopes ────────────────────────────────────────────────────────────────
 
@@ -27,6 +39,10 @@ class SegmentType extends Model
         return $query->where('active', true);
     }
 
+    /**
+     * @deprecated Usar la relación via ProductionType en su lugar.
+     * Se mantiene por compatibilidad con código existente.
+     */
     public function scopeForType($query, string $productionType)
     {
         return $query->where('production_type', $productionType);
@@ -34,10 +50,6 @@ class SegmentType extends Model
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    /**
-     * Convierte el color hex a clases Tailwind aproximadas para la UI.
-     * Para la tabla y el editor usamos el hex directamente en style="".
-     */
     public function tailwindTextColor(): string
     {
         $map = [

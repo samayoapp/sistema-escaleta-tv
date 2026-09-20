@@ -78,16 +78,30 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/segment/{id}',                  [RundownController::class, 'deleteSegment'])
         ->middleware('role:admin,editor');
 
-    // ── Admin: Configuración Global (solo Admin) ──────────────────────────────
-    Route::get('/admin/config',                                    [\App\Http\Controllers\ConfigController::class, 'index'])
+    // ── Admin: Configuración Global ───────────────────────────────────────────
+    Route::get('/admin/config',                                          [\App\Http\Controllers\ConfigController::class, 'index'])
         ->middleware('role:admin');
-    Route::post('/admin/config/segment-types',                     [\App\Http\Controllers\ConfigController::class, 'storeSegmentType'])
+
+    // Tipos de Ítem (catálogo global)
+    Route::post('/admin/config/segment-types',                           [\App\Http\Controllers\ConfigController::class, 'storeSegmentType'])
         ->middleware('role:admin');
-    Route::post('/admin/config/segment-types/{id}/update',         [\App\Http\Controllers\ConfigController::class, 'updateSegmentType'])
+    Route::post('/admin/config/segment-types/{id}/update',               [\App\Http\Controllers\ConfigController::class, 'updateSegmentType'])
         ->middleware('role:admin');
-    Route::post('/admin/config/segment-types/{id}/toggle',         [\App\Http\Controllers\ConfigController::class, 'toggleSegmentType'])
+    Route::delete('/admin/config/segment-types/{id}/delete',             [\App\Http\Controllers\ConfigController::class, 'destroySegmentType'])
         ->middleware('role:admin');
-    Route::delete('/admin/config/segment-types/{id}/delete',       [\App\Http\Controllers\ConfigController::class, 'destroySegmentType'])
+
+    // Toggle pivote (ítem ↔ tipo de producción)
+    Route::post('/admin/config/pivot/{ptId}/{stId}/toggle',              [\App\Http\Controllers\ConfigController::class, 'togglePivot'])
+        ->middleware('role:admin');
+
+    // Tipos de Producción
+    Route::post('/admin/config/production-types',                        [\App\Http\Controllers\ConfigController::class, 'storeProductionType'])
+        ->middleware('role:admin');
+    Route::post('/admin/config/production-types/{id}/update',            [\App\Http\Controllers\ConfigController::class, 'updateProductionType'])
+        ->middleware('role:admin');
+    Route::post('/admin/config/production-types/{id}/toggle',            [\App\Http\Controllers\ConfigController::class, 'toggleProductionType'])
+        ->middleware('role:admin');
+    Route::delete('/admin/config/production-types/{id}/delete',          [\App\Http\Controllers\ConfigController::class, 'destroyProductionType'])
         ->middleware('role:admin');
 
     // ── Admin: Usuarios (solo Admin) ──────────────────────────────────────────
