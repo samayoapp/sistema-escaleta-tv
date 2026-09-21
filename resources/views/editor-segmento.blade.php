@@ -350,7 +350,20 @@ window.guardarEnBiblioteca = async function(segmentId) {
     });
     const data = await res.json();
     // Mostrar toast de confirmación
-    if (window.mostrarToast) mostrarToast(data.message || '✓ Guardado en biblioteca');
+    if (window.sinPermiso) {
+    // usar toast verde si existe, si no alert simple
+    }
+    // Mostrar confirmación visual simple
+    const btn = document.querySelector(`button[onclick="guardarEnBiblioteca(${segmentId})"]`);
+    if (btn) {
+        const original = btn.textContent;
+        btn.textContent = '✓ Guardado en biblioteca';
+        btn.classList.add('border-green-600', 'text-green-400');
+        setTimeout(() => {
+            btn.textContent = original;
+            btn.classList.remove('border-green-600', 'text-green-400');
+        }, 2000);
+    }
 };
 </script>
 </div>
