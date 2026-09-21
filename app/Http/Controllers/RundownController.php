@@ -26,7 +26,7 @@ class RundownController extends Controller
     }
 
     // ─── Helper: calcular locked con timezone Tegucigalpa ────────────────────
-    private function calcLocked($rundown): bool
+    public function calcLocked($rundown): bool
     {
         $tz = 'America/Tegucigalpa';
         $airDateTime = \Carbon\Carbon::createFromFormat(
@@ -453,6 +453,30 @@ public function editSegment($id)
         $segment->in_prompter = !$segment->in_prompter;
         $segment->save();
         return $this->editSegment($id);
+    }
+
+    public function duplicateSegment($id)
+    {
+        $segment = Segment::findOrFail($id);
+
+        // Hacer espacio después del segmento actual
+        Segment::where('block_id', $segment->block_id)
+            ->where('order_index', '>', $segment->order_index)
+            ->increment('order_index');
+
+        Segment::create([
+            'rundown_id'       => $segment->rundown_id,
+            'block_id'         => $segment->block_id,
+            'title'            => $segment->title . ' (copia)',
+            'type'             => $segment->type,
+            'duration_seconds' => $segment->duration_seconds,
+            'has_script'       => $segment->has_script,
+            'script_content'   => $segment->script_content,
+            'production_notes' => $segment->production_notes,
+            'order_index'      => $segment->order_index + 1,
+        ]);
+
+        return $this->renderTable($segment->rundown_id);
     }
 
 

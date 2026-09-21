@@ -117,4 +117,13 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/segment/{id}/update-notes', [RundownController::class, 'updateNotes'])
         ->middleware('role:admin,editor');
+
+    // ── Biblioteca de segmentos ───────────────────────────────────────────────
+    Route::get('/library/segments',                    [\App\Http\Controllers\LibraryController::class, 'index']);
+    Route::post('/library/segments',                   [\App\Http\Controllers\LibraryController::class, 'store'])->middleware('role:admin,editor');
+    Route::post('/library/segments/from-segment/{id}', [\App\Http\Controllers\LibraryController::class, 'fromSegment'])->middleware('role:admin,editor');
+    Route::post('/library/segments/{id}/insert',       [\App\Http\Controllers\LibraryController::class, 'insertIntoBlock'])->middleware('role:admin,editor');
+    Route::delete('/library/segments/{id}',            [\App\Http\Controllers\LibraryController::class, 'destroy'])->middleware('role:admin');
+
+    Route::post('/segment/{id}/duplicate', [\App\Http\Controllers\RundownController::class, 'duplicateSegment'])->middleware('role:admin,editor');
 });

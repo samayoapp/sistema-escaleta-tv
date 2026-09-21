@@ -111,6 +111,11 @@
                     hx-swap="innerHTML"
                     class="text-red-400 hover:text-red-300 text-xs transition px-2 py-1 rounded border border-red-900 hover:border-red-700">
                     🗑
+                <button onclick="abrirBiblioteca({{ $block->id }})"
+                    title="Insertar desde biblioteca"
+                    class="bg-gray-700 hover:bg-gray-600 text-blue-400 text-xs font-bold px-2 py-1 rounded transition">
+                    📚
+                </button>
                 </button>
                 @else
                 <button onclick="sinPermiso('Solo editores y admins pueden modificar bloques.')"
@@ -271,9 +276,18 @@
                 </span>
             </td>
 
-            {{-- Eliminar --}}
+            {{-- Eliminar + Duplicar --}}
             <td class="px-4 py-3 text-right" onclick="event.stopPropagation()">
                 @if(!$locked)
+                <div class="flex justify-end items-center gap-1">
+                <button
+                    hx-post="/segment/{{ $segment->id }}/duplicate"
+                    hx-target="#tabla-segmentos"
+                    hx-swap="innerHTML"
+                    title="Duplicar ítem"
+                    class="text-gray-600 hover:text-blue-400 transition text-xs px-1">
+                    ⧉
+                </button>
                 <button
                     hx-delete="/segment/{{ $segment->id }}"
                     hx-confirm="¿Eliminar este segmento?"
@@ -284,6 +298,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                     </svg>
                 </button>
+                </div>
                 @endif
             </td>
         </tr>

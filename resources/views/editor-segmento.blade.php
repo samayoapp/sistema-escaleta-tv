@@ -150,6 +150,18 @@
         @endif
     </div>
 
+
+    {{-- GUARDAR EN BIBLIOTECA --}}
+    @if(!$locked)
+    <div class="mb-3">
+        <button onclick="guardarEnBiblioteca({{ $segment->id }})"
+            class="w-full text-xs font-bold uppercase tracking-widest px-3 py-2 rounded border border-dashed
+                border-gray-600 text-gray-500 hover:border-blue-500 hover:text-blue-400 transition">
+            💾 Guardar en Biblioteca
+        </button>
+    </div>
+    @endif
+
     {{-- SEPARADOR --}}
     <div class="border-t border-gray-700/60 mb-4"></div>
 
@@ -329,5 +341,16 @@
         if (e.key === 'Escape') cerrarModalNotas();
     });
 })();
+
+window.guardarEnBiblioteca = async function(segmentId) {
+    const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const res  = await fetch(`/library/segments/from-segment/${segmentId}`, {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': csrf }
+    });
+    const data = await res.json();
+    // Mostrar toast de confirmación
+    if (window.mostrarToast) mostrarToast(data.message || '✓ Guardado en biblioteca');
+};
 </script>
 </div>

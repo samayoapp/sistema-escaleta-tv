@@ -150,6 +150,10 @@
                             </svg>
                             NUEVO BLOQUE
                         </button>
+                        <button onclick="abrirBiblioteca()"
+                        class="bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded text-xs font-bold uppercase tracking-widest transition text-blue-400">
+                        📚 Biblioteca
+                        </button>
                         @endif
                     @endif
                 </div>
@@ -484,6 +488,86 @@
     }
 
     document.addEventListener('DOMContentLoaded', initSortable);
+</script>
+
+{{-- MODAL BIBLIOTECA --}}
+<div id="modal-biblioteca" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+     onclick="if(event.target===this) this.classList.add('hidden')">
+    <div class="bg-gray-800 rounded-xl border border-gray-700 w-full max-w-lg p-6 shadow-2xl">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h2 class="text-lg font-bold">📚 Biblioteca de Ítems</h2>
+                <p class="text-xs text-gray-500 mt-0.5">Haz clic en un ítem para insertarlo en el bloque activo</p>
+            </div>
+            <button onclick="document.getElementById('modal-biblioteca').classList.add('hidden')"
+                class="text-gray-600 hover:text-white transition">✕</button>
+        </div>
+
+        {{-- Búsqueda --}}
+        <input type="text" id="bib-search" placeholder="Buscar ítem..."
+            class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm text-white mb-4 focus:border-blue-500 focus:outline-none">
+
+        {{-- Lista --}}
+        <div id="bib-lista" class="flex flex-col gap-2 max-h-80 overflow-y-auto">
+            <p class="text-gray-600 text-sm text-center py-4">Cargando...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+let _bibItems = [];
+let _activeBlockId = null;
+
+window.abrirBiblioteca = async function(blockId) {
+    _activeBlockId = blockId || null;
+    document.getElementById('modal-biblioteca').classList.remove('hidden');
+    document.getElementById('bib-search').value = '';
+
+    const res   = await fetch('/library/segments');
+    _bibItems   = await res.json();
+    renderBiblioteca(_bibItems);
+};
+
+function renderBiblioteca(items) {
+    const lista = document.getElementById('bib-lista');
+    if (!items.length) {
+        lista.innerHTML = '<p class="text-gray-600 text-sm text-center py-4">No hay ítems en la biblioteca.</p>';
+        return;
+    }
+    lista.innerHTML = items.map(item => `
+        <div class="flex items-center justify-between bg-gray-900/50 border border-gray-700 rounded px-3 py-2 hover:border-blue-500 transition cursor-pointer group"
+             onclick="insertarDeLibreria(${item.id})">
+            <div>
+                <div class="font-bold text-sm text-white group-hover:text-blue-400 transition">${item.title}</div>
+                <div class="text-xs text-gray-500 mt-0.5">${item.type} &nbsp;·&nbsp; ${Math.floor(item.duration_seconds/60)}m ${item.duration_seconds%60}s</div>
+            </div>
+            <span class="text-xs text-blue-400 opacity-0 group-hover:opacity-100 transition font-bold">+ Insertar</span>
+        </div>
+    `).join('');
+}
+
+document.getElementById('bib-search').addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    renderBiblioteca(_bibItems.filter(i => i.title.toLowerCase().includes(q) || i.type.toLowerCase().includes(q)));
+});
+
+window.insertarDeLibreria = async function(itemId) {
+    if (!_activeBlockId) {
+        // Si no hay bloque activo, pedir que seleccione uno
+        alert('Selecciona un bloque primero haciendo clic en el botón 📚 de ese bloque.');
+        return;
+    }
+    const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const res  = await fetch(`/library/segments/${itemId}/insert`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+        body: JSON.stringify({ block_id: _activeBlockId })
+    });
+    const html = await res.text();
+    document.getElementById('tabla-segmentos').innerHTML = html;
+    htmx.process(document.getElementById('tabla-segmentos'));
+    document.getElementById('modal-biblioteca').classList.add('hidden');
+};
 </script>
 
 </body>
