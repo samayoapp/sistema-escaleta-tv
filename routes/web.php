@@ -82,6 +82,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/config',                                          [\App\Http\Controllers\ConfigController::class, 'index'])
         ->middleware('role:admin');
 
+    Route::post('/admin/config/usuarios',          [\App\Http\Controllers\ConfigController::class, 'storeUser'])->middleware('role:admin');
+    Route::put('/admin/config/usuarios/{id}',      [\App\Http\Controllers\ConfigController::class, 'updateUser'])->middleware('role:admin');
+    Route::delete('/admin/config/usuarios/{id}',   [\App\Http\Controllers\ConfigController::class, 'destroyUser'])->middleware('role:admin');
+
     // Tipos de Ítem (catálogo global)
     Route::post('/admin/config/segment-types',                           [\App\Http\Controllers\ConfigController::class, 'storeSegmentType'])
         ->middleware('role:admin');

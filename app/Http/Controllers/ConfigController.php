@@ -27,7 +27,9 @@ class ConfigController extends Controller
             }
         }
 
-        return view('admin.config', compact('segmentTypes', 'productionTypes', 'pivotMap'));
+            $users = \App\Models\User::orderBy('name')->get();
+
+            return view('admin.config', compact('segmentTypes', 'productionTypes', 'pivotMap', 'users'));
     }
 
     // ─── CRUD Tipos de Ítem ───────────────────────────────────────────────────
@@ -179,5 +181,58 @@ class ConfigController extends Controller
         $pt->delete();
         ProductionType::clearCache();
         return redirect('/admin/config#production-types')->with('success', "{$label} eliminado.");
+    }
+
+
+        // ─── CRUD Usuarios ────────────────────────────────────────────────────────
+
+    public function storeUser(Request $request)
+    {
+        $request->validate([
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|unique:users,email',
+            'password' => 'required|min:8|confirmed',
+            'role'     => 'required|in:admin,editor,viewer',
+        ]);
+
+        \App\Models\User::create([
+            'name'     => $request->name,
+            'email'    => $request->email,
+            'password' => bcrypt($request->password),
+            'role'     => $request->role,
+        ]);
+
+        return redirect('/admin/config#usuarios')->with('success', 'Usuario creado correctamente.');
+    }
+
+    public function updateUser(Request $request, $id)
+    {
+        $user = \App\Models\User::findOrFail($id);
+
+        $request->validate([
+            'name'  => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $id,
+            'role'  => 'required|in:admin,editor,viewer',
+        ]);
+
+        $data = ['name' => $request->name, 'email' => $request->email, 'role' => $request->role];
+
+        if ($request->filled('password')) {
+            $request->validate(['password' => 'min:8|confirmed']);
+            $data['password'] = bcrypt($request->password);
+        }
+
+        $user->update($data);
+        return redirect('/admin/config#usuarios')->with('success', 'Usuario actualizado.');
+    }
+
+    public function destroyUser($id)
+    {
+        $user = \App\Models\User::findOrFail($id);
+        if ($user->id === auth()->id()) {
+            return redirect('/admin/config#usuarios')->with('error', 'No puedes eliminarte a ti mismo.');
+        }
+        $user->delete();
+        return redirect('/admin/config#usuarios')->with('success', 'Usuario eliminado.');
     }
 }
