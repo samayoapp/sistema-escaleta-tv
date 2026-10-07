@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <title>{{ $rundown->show->title }} — @if($rundown->show->hasEpisode() && $rundown->episode_number)EP {{ $rundown->episode_number }}: @endif{{ $rundown->getEditionTitle() }} — Guion</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -25,10 +26,9 @@
             left: 0; right: 0;
             padding-bottom: 6px;
             border-bottom: 1.5px solid #cbd5e1;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
         }
+        .page-header table { width: 100%; border-collapse: collapse; }
+        .page-header td    { border: none; padding: 0; vertical-align: bottom; }
         .page-header .show-name {
             font-size: 8pt;
             font-weight: bold;
@@ -46,6 +46,7 @@
             color: #94a3b8;
             letter-spacing: 1px;
             text-transform: uppercase;
+            text-align: right;
         }
 
         /* ── FOOTER FIJO ── */
@@ -55,12 +56,9 @@
             left: 0; right: 0;
             padding-top: 5px;
             border-top: 1px solid #e2e8f0;
-            text-align: center;
-            font-size: 6.5pt;
-            color: #cbd5e1;
-            letter-spacing: 1px;
-            text-transform: uppercase;
         }
+        .page-footer table { width: 100%; border-collapse: collapse; }
+        .page-footer td    { border: none; padding: 0; font-size: 6.5pt; color: #94a3b8; }
 
         /* ── TÍTULO PRIMERA PÁGINA ── */
         .titulo-pagina {
@@ -99,6 +97,28 @@
             font-weight: bold;
             color: #334155;
             text-align: right;
+        }
+        .titulo-episodio {
+            font-size: 10.5pt;
+            font-weight: bold;
+            color: #0284c7;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+        .titulo-ep-badge {
+            background-color: #e0f2fe;
+            color: #0369a1;
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-size: 8.5pt;
+            font-family: 'DejaVu Sans Mono', monospace;
+        }
+        .titulo-meta-fecha {
+            font-size: 8pt;
+            color: #475569;
+            text-align: right;
+            margin-top: 2px;
         }
         .titulo-datos {
             background: #f8fafc;
@@ -269,39 +289,115 @@
 
 {{-- HEADER FIJO --}}
 <div class="page-header">
-    <div>
-        <div class="show-name">{{ $rundown->show->title }}</div>
-        <div class="show-date">{{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}</div>
-    </div>
-    <div class="label">Guion Literario</div>
+    <table><tr>
+        <td style="width:70%;">
+            <div class="show-name">
+                {{ $rundown->show->title }}
+                @if($rundown->show->hasEpisode())
+                    @if($rundown->episode_number || $rundown->episode_name)
+                        <span style="color:#0284c7; font-size:7.5pt; font-weight:normal; text-transform:none;">
+                            — @if($rundown->episode_number)<strong>EP {{ $rundown->episode_number }}</strong>@endif @if($rundown->episode_number && $rundown->episode_name): @endif{{ $rundown->episode_name }}
+                        </span>
+                    @endif
+                @else
+                    <span style="color:#dc2626; font-size:7.5pt; font-weight:normal; text-transform:none;">
+                        — <strong>[EN VIVO]</strong> {{ $rundown->getEditionTitle() }}
+                    </span>
+                @endif
+            </div>
+            <div class="show-date">
+                Aire: {{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}
+                @if($rundown->delivery_date)
+                    &nbsp;|&nbsp; <span style="color:#b45309;">Entrega: {{ \Carbon\Carbon::parse($rundown->delivery_date)->format('d/m/Y') }}</span>
+                @endif
+            </div>
+        </td>
+        <td style="width:30%; text-align:right;">
+            <div class="label">Guion Literario</div>
+        </td>
+    </tr></table>
 </div>
 
 {{-- FOOTER FIJO --}}
 <div class="page-footer">
-    {{ $rundown->show->title }} &nbsp;·&nbsp; {{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }} &nbsp;·&nbsp; Uso Interno
+    <table><tr>
+        <td>
+            {{ strtoupper($rundown->show->title) }}
+            @if($rundown->show->hasEpisode())
+                @if($rundown->episode_number || $rundown->episode_name)
+                    &nbsp;·&nbsp; @if($rundown->episode_number)EP {{ $rundown->episode_number }}@endif @if($rundown->episode_number && $rundown->episode_name): @endif{{ $rundown->episode_name }}
+                @endif
+            @else
+                &nbsp;·&nbsp; EN VIVO: {{ $rundown->getEditionTitle() }}
+            @endif
+            &nbsp;·&nbsp; Aire: {{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}
+            @if($rundown->delivery_date)
+                &nbsp;·&nbsp; Entrega: {{ \Carbon\Carbon::parse($rundown->delivery_date)->format('d/m/Y') }}
+            @endif
+        </td>
+        <td style="text-align:right;">USO INTERNO — GUION</td>
+    </tr></table>
 </div>
 
 {{-- TÍTULO PRIMERA PÁGINA --}}
 <div class="titulo-pagina">
     <table class="titulo-top-table"><tr>
-        <td style="width:65%">
+        <td style="width:62%">
             <div class="titulo-show">{{ $rundown->show->title }}</div>
+            @if($rundown->show->hasEpisode())
+                @if($rundown->episode_number || $rundown->episode_name)
+                    <div class="titulo-episodio">
+                        @if($rundown->episode_number)
+                            <span class="titulo-ep-badge">EP {{ $rundown->episode_number }}</span>
+                        @endif
+                        @if($rundown->episode_name)
+                            <span>{{ $rundown->episode_name }}</span>
+                        @endif
+                    </div>
+                @endif
+            @else
+                <div class="titulo-episodio" style="color:#b91c1c;">
+                    <span class="titulo-ep-badge" style="background-color:#fee2e2; color:#b91c1c;">EN VIVO</span>
+                    <span style="color:#1e293b;">{{ $rundown->getEditionTitle() }}</span>
+                </div>
+            @endif
             @if($rundown->show->channel)
                 <div class="titulo-canal">{{ $rundown->show->channel }}</div>
             @endif
         </td>
-        <td style="width:35%">
+        <td style="width:38%; text-align:right;">
             <div class="titulo-doc-label">Guion Literario</div>
-            <div class="titulo-fecha">{{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}</div>
+            <div class="titulo-meta-fecha">
+                <span style="color:#64748b; font-size:7pt; text-transform:uppercase;">Fecha de Aire:</span>
+                <span style="font-size:10pt; font-weight:bold; color:#1e3a5f;">{{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}</span>
+            </div>
+            @if($rundown->delivery_date)
+            <div class="titulo-meta-fecha" style="margin-top:2px;">
+                <span style="color:#92400e; font-size:7pt; text-transform:uppercase;">Fecha de Entrega:</span>
+                <span style="font-size:10pt; font-weight:bold; color:#b45309;">{{ \Carbon\Carbon::parse($rundown->delivery_date)->format('d/m/Y') }}</span>
+            </div>
+            @endif
         </td>
     </tr></table>
 </div>
 <div class="titulo-datos">
     <table><tr>
         <td>
-            <div class="dato-lbl">Emisión</div>
-            <div class="dato-val">{{ \Carbon\Carbon::parse($rundown->air_date)->isoFormat('dddd D MMM YYYY') }}</div>
+            <div class="dato-lbl">Fecha de Aire</div>
+            <div class="dato-val">{{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}</div>
         </td>
+        @if($rundown->delivery_date)
+        <td>
+            <div class="dato-lbl" style="color:#b45309;">Fecha Entrega</div>
+            <div class="dato-val" style="color:#b45309;">{{ \Carbon\Carbon::parse($rundown->delivery_date)->format('d/m/Y') }}</div>
+        </td>
+        @endif
+        @if($rundown->show->hasAirTime())
+        <td>
+            <div class="dato-lbl">Hora de Inicio</div>
+            <div class="dato-val">{{ substr($rundown->air_time ?? '00:00:00', 0, 5) }}</div>
+        </td>
+        @endif
         <td>
             <div class="dato-lbl">Estado</div>
             <div class="dato-val">{{ ucfirst($rundown->status) }}</div>
@@ -379,7 +475,19 @@
 @endforeach
 
 <div class="fin">
-    ★ &nbsp; Fin del Guion &nbsp;·&nbsp; {{ $rundown->show->title }} &nbsp;·&nbsp; {{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }} &nbsp; ★
+    ★ &nbsp; Fin del Guion &nbsp;·&nbsp; {{ $rundown->show->title }}
+    @if($rundown->show->hasEpisode())
+        @if($rundown->episode_number || $rundown->episode_name)
+            &nbsp;·&nbsp; @if($rundown->episode_number)EP {{ $rundown->episode_number }}@endif @if($rundown->episode_number && $rundown->episode_name): @endif{{ $rundown->episode_name }}
+        @endif
+    @else
+        &nbsp;·&nbsp; EN VIVO: {{ $rundown->getEditionTitle() }}
+    @endif
+    &nbsp;·&nbsp; Aire: {{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}
+    @if($rundown->delivery_date)
+        &nbsp;·&nbsp; Entrega: {{ \Carbon\Carbon::parse($rundown->delivery_date)->format('d/m/Y') }}
+    @endif
+    &nbsp; ★
 </div>
 
 </body>

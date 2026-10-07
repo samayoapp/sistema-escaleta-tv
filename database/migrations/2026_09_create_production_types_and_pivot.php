@@ -52,6 +52,10 @@ return new class extends Migration
         ]);
 
         // ── 2. Tabla pivote segment_type ↔ production_type ───────────────────
+        if (!Schema::hasTable('segment_types')) {
+            (new (require __DIR__ . '/2026_09_create_segment_types_table.php'))->up();
+        }
+
         Schema::create('production_type_segment_type', function (Blueprint $table) {
             $table->id();
             $table->foreignId('production_type_id')->constrained('production_types')->onDelete('cascade');

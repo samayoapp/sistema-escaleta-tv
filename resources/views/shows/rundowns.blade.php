@@ -59,12 +59,9 @@
     </header>
 
     {{-- STATS --}}
+    {{-- STATS --}}
     @php
-        $tz = 'America/Tegucigalpa';
-        $ahora = \Carbon\Carbon::now($tz);
-        $vencida = fn($r) => $ahora->greaterThan(
-            \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $r->air_date.' '.($r->air_time??'00:00:00'), $tz)->addHour()
-        );
+        $vencida = fn($r) => $r->isLocked();
         $emitidas   = $show->rundowns->filter($vencida)->count();
         $aprobadas  = $show->rundowns->where('status', 'aprobada')->reject($vencida)->count();
         $borradores = $show->rundowns->where('status', 'borrador')->reject($vencida)->count();
@@ -95,17 +92,21 @@
     @endphp
         <div class="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
             <div class="px-5 py-3 bg-gray-700/50 border-b border-gray-700">
-                <h2 class="text-xs font-bold uppercase text-gray-400 tracking-widest">Escaletas</h2>
+                <h2 class="text-xs font-bold uppercase text-gray-400 tracking-widest">
+                    {{ $show->hasEpisode() ? 'Episodios y Escaletas' : 'Escaletas' }}
+                </h2>
             </div>
             <table class="w-full">
                 <thead>
                     <tr class="border-b border-gray-700 text-xs uppercase text-gray-500 tracking-widest">
-                        @if($show->isReality())
+                        @if($show->hasEpisode())
                             <th class="px-5 py-3 text-left">Episodio</th>
-                            <th class="px-5 py-3 text-left">Fecha</th>
+                            <th class="px-5 py-3 text-left">Fecha Entrega</th>
+                            <th class="px-5 py-3 text-left">Fecha de Aire</th>
                         @else
-                            <th class="px-5 py-3 text-left">Fecha</th>
-                            <th class="px-5 py-3 text-left">Hora</th>
+                            <th class="px-5 py-3 text-left">Edición / Emisión</th>
+                            <th class="px-5 py-3 text-left">Fecha de Aire</th>
+                            <th class="px-5 py-3 text-left">Hora de Inicio</th>
                         @endif
                         <th class="px-5 py-3 text-left">Estado</th>
                         <th class="px-5 py-3 text-right">Acciones</th>
@@ -114,16 +115,14 @@
                 <tbody class="divide-y divide-gray-700/50">
                     @foreach($rundownsOrdenadas as $rundown)
                     @php
-                        $airDT   = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $rundown->air_date . ' ' . ($rundown->air_time ?? '00:00:00'), 'America/Tegucigalpa');
-                        $emitida = \Carbon\Carbon::now('America/Tegucigalpa')->greaterThan($airDT->copy()->addHour());
+                        $emitida  = $rundown->isLocked();
                         $aprobada = !$emitida && $rundown->status === 'aprobada';
                         $borrador = !$emitida && $rundown->status !== 'aprobada';
                     @endphp
-                    <tr class="hover:bg-gray-700/30 transition group
-                        {{ $emitida ? 'opacity-50' : '' }}">
+                    <tr class="hover:bg-gray-700/30 transition group {{ $emitida ? 'opacity-50' : '' }}">
 
-                        {{-- Columna 1: Episodio (reality) o Fecha (live) --}}
-                        @if($show->isReality())
+                        @if($show->hasEpisode())
+                        {{-- Columna 1: Episodio --}}
                         <td class="px-5 py-4">
                             @if($rundown->episode_number || $rundown->episode_name)
                                 <div class="font-bold {{ $emitida ? 'text-gray-500' : 'text-pink-400' }}">
@@ -134,25 +133,55 @@
                                     @endif
                                     {{ $rundown->episode_name }}
                                 </div>
-                                <div class="text-xs text-gray-500 mt-0.5">
-                                    {{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}
-                                </div>
                             @else
                                 <div class="font-bold {{ $emitida ? 'text-gray-500' : 'text-white' }}">
-                                    {{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}
+                                    Episodio #{{ $loop->iteration }}
                                 </div>
                                 <div class="text-xs text-gray-600 italic">Sin nombre de episodio</div>
                             @endif
                         </td>
 
-                        {{-- Columna 2: Fecha completa (reality) --}}
+                        {{-- Columna 2: Fecha de Entrega --}}
                         <td class="px-5 py-4">
+                            @if($rundown->delivery_date)
+                                <div class="font-bold {{ $emitida ? 'text-gray-500' : 'text-amber-400' }} text-sm">
+                                    {{ \Carbon\Carbon::parse($rundown->delivery_date)->format('d/m/Y') }}
+                                </div>
+                                <div class="text-[11px] text-gray-500">
+                                    {{ \Carbon\Carbon::parse($rundown->delivery_date)->translatedFormat('l') }}
+                                </div>
+                            @else
+                                <span class="text-xs text-gray-600 italic">— Sin fecha —</span>
+                            @endif
+                        </td>
+
+                        {{-- Columna 3: Fecha de Aire --}}
+                        <td class="px-5 py-4">
+                            <div class="font-bold {{ $emitida ? 'text-gray-500' : 'text-white' }}">
+                                {{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}
+                            </div>
                             <div class="text-xs text-gray-500">
                                 {{ \Carbon\Carbon::parse($rundown->air_date)->translatedFormat('l') }}
                             </div>
                         </td>
                         @else
-                        {{-- Columna 1: Fecha (live) --}}
+                        {{-- Programa sin episodios (en vivo) --}}
+                        {{-- Columna 1: Edición / Emisión --}}
+                        <td class="px-5 py-4">
+                            @if($rundown->episode_name)
+                                <div class="font-bold {{ $emitida ? 'text-gray-500' : 'text-blue-400' }} text-sm">
+                                    {{ $rundown->episode_name }}
+                                </div>
+                                <div class="text-[11px] text-gray-500">Edición especial</div>
+                            @else
+                                <div class="font-bold {{ $emitida ? 'text-gray-500' : 'text-white' }} text-sm">
+                                    {{ $rundown->getEditionTitle() }}
+                                </div>
+                                <div class="text-[11px] text-gray-500">Emisión regular por fecha</div>
+                            @endif
+                        </td>
+
+                        {{-- Columna 2: Fecha de Aire --}}
                         <td class="px-5 py-4">
                             <div class="font-bold {{ $emitida ? 'text-gray-500' : 'text-white' }}">
                                 {{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}
@@ -162,7 +191,7 @@
                             </div>
                         </td>
 
-                        {{-- Columna 2: Hora (live) --}}
+                        {{-- Columna 3: Hora de Inicio --}}
                         <td class="px-5 py-4">
                             <span class="font-mono {{ $emitida ? 'text-gray-600' : 'text-yellow-400' }} text-sm">
                                 {{ substr($rundown->air_time ?? '00:00:00', 0, 5) }}
@@ -222,14 +251,16 @@
                                     @endif
 
                                     {{-- Editar fecha/hora --}}
-                                    <button onclick="abrirEditar({{ $rundown->id }}, '{{ $rundown->air_date }}', '{{ substr($rundown->air_time ?? '19:00:00', 0, 5) }}', '{{ $rundown->episode_number }}', '{{ addslashes($rundown->episode_name ?? '') }}')"
-                                        class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs font-bold uppercase transition text-gray-300">
+                                    <button onclick="abrirEditar({{ $rundown->id }}, '{{ \Carbon\Carbon::parse($rundown->air_date)->format('Y-m-d') }}', '{{ substr($rundown->air_time ?? '19:00:00', 0, 5) }}', '{{ $rundown->episode_number }}', '{{ addslashes($rundown->episode_name ?? '') }}', '{{ $rundown->delivery_date ? \Carbon\Carbon::parse($rundown->delivery_date)->format('Y-m-d') : '' }}')"
+                                        class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs font-bold uppercase transition text-gray-300"
+                                        title="Editar fechas y horarios">
                                         🕐
                                     </button>
 
                                     {{-- Duplicar --}}
-                                    <button onclick="abrirDuplicar({{ $rundown->id }}, '{{ $rundown->air_date }}')"
-                                        class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs font-bold uppercase transition text-gray-300">
+                                    <button onclick="abrirDuplicar({{ $rundown->id }}, '{{ \Carbon\Carbon::parse($rundown->air_date)->format('Y-m-d') }}', '{{ $rundown->delivery_date ? \Carbon\Carbon::parse($rundown->delivery_date)->format('Y-m-d') : '' }}', '{{ $rundown->episode_number ? $rundown->episode_number + 1 : '' }}', '{{ addslashes($rundown->episode_name ?? '') }}')"
+                                        class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs font-bold uppercase transition text-gray-300"
+                                        title="Duplicar">
                                         📋
                                     </button>
 
@@ -240,12 +271,12 @@
                                     </button>
                                 @else
                                     {{-- VENCIDA: duplicar siempre; editar/eliminar solo admin --}}
-                                    <button onclick="abrirDuplicar({{ $rundown->id }}, '{{ $rundown->air_date }}')"
+                                    <button onclick="abrirDuplicar({{ $rundown->id }}, '{{ \Carbon\Carbon::parse($rundown->air_date)->format('Y-m-d') }}', '{{ $rundown->delivery_date ? \Carbon\Carbon::parse($rundown->delivery_date)->format('Y-m-d') : '' }}', '{{ $rundown->episode_number ? $rundown->episode_number + 1 : '' }}', '{{ addslashes($rundown->episode_name ?? '') }}')"
                                         class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs font-bold uppercase transition text-gray-400">
                                         📋 Duplicar
                                     </button>
                                     @if(auth()->user()->isAdmin())
-                                        <button onclick="abrirEditar({{ $rundown->id }}, '{{ $rundown->air_date }}', '{{ substr($rundown->air_time ?? '19:00:00', 0, 5) }}', '{{ $rundown->episode_number }}', '{{ addslashes($rundown->episode_name ?? '') }}')"
+                                        <button onclick="abrirEditar({{ $rundown->id }}, '{{ \Carbon\Carbon::parse($rundown->air_date)->format('Y-m-d') }}', '{{ substr($rundown->air_time ?? '19:00:00', 0, 5) }}', '{{ $rundown->episode_number }}', '{{ addslashes($rundown->episode_name ?? '') }}', '{{ $rundown->delivery_date ? \Carbon\Carbon::parse($rundown->delivery_date)->format('Y-m-d') : '' }}')"
                                             class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs font-bold uppercase transition text-gray-300"
                                             title="Cambiar fecha/hora para desbloquear">
                                             🕐
@@ -315,33 +346,15 @@
 <div id="modal-nueva-escaleta" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50">
     <div class="bg-gray-800 rounded-xl border border-gray-700 w-full max-w-md p-6 shadow-2xl">
         <h2 class="text-lg font-bold text-white mb-1">
-            {{ $show->isReality() ? '🎬 Nuevo Episodio' : '📋 Nueva Escaleta' }}
+            {{ $show->hasEpisode() ? '🎬 Nuevo Episodio' : '📋 Nueva Escaleta' }}
         </h2>
         <p class="text-gray-500 text-sm mb-5">{{ $show->title }}</p>
         <form method="POST" action="/shows/{{ $show->id }}/rundowns">
             @csrf
             <div class="flex flex-col gap-4">
 
-                {{-- Fecha (siempre visible) --}}
-                <div>
-                    <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">
-                        {{ $show->isReality() ? 'Fecha de Grabación *' : 'Fecha de Emisión *' }}
-                    </label>
-                    <input type="date" name="air_date" required value="{{ date('Y-m-d') }}"
-                        class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-blue-500 focus:outline-none">
-                </div>
-
-                {{-- Hora de inicio — solo en vivo --}}
-                @if($show->isLive())
-                <div>
-                    <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">Hora de Inicio *</label>
-                    <input type="time" name="air_time" required value="19:00"
-                        class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-blue-500 focus:outline-none">
-                </div>
-                @endif
-
-                {{-- Campos de episodio — solo en reality --}}
-                @if($show->isReality())
+                {{-- Campos de episodio — si el tipo de producción maneja episodios --}}
+                @if($show->hasEpisode())
                 <div class="grid grid-cols-3 gap-3">
                     <div>
                         <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">Episodio #</label>
@@ -354,6 +367,46 @@
                             class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-pink-500 focus:outline-none">
                     </div>
                 </div>
+
+                {{-- Fecha de Entrega --}}
+                <div>
+                    <label class="text-xs uppercase text-amber-400 font-bold tracking-widest block mb-1">
+                        📅 Fecha de Entrega
+                    </label>
+                    <input type="date" name="delivery_date"
+                        class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-amber-500 focus:outline-none">
+                    <span class="text-[10px] text-gray-500 mt-0.5 block">Fecha límite de producción / entrega del episodio.</span>
+                </div>
+                @else
+                <div>
+                    <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">
+                        Edición o Tema Central (Opcional)
+                    </label>
+                    <input type="text" name="episode_name" placeholder="Ej: Edición Mediodía, Especial Elecciones..."
+                        class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-blue-500 focus:outline-none">
+                    <span class="text-[10px] text-gray-500 mt-0.5 block">
+                        Opcional. Si lo dejas en blanco, se titulará automáticamente con la fecha.
+                    </span>
+                </div>
+                @endif
+
+                {{-- Fecha de Aire (siempre presente para todos) --}}
+                <div>
+                    <label class="text-xs uppercase text-blue-400 font-bold tracking-widest block mb-1">
+                        📡 Fecha de Aire *
+                    </label>
+                    <input type="date" name="air_date" required value="{{ date('Y-m-d') }}"
+                        class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-blue-500 focus:outline-none">
+                    <span class="text-[10px] text-gray-500 mt-0.5 block">Fecha en que saldrá al aire por emisión.</span>
+                </div>
+
+                {{-- Hora de inicio — si el show tiene hora al aire fija --}}
+                @if($show->hasAirTime())
+                <div>
+                    <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">Hora de Inicio *</label>
+                    <input type="time" name="air_time" required value="19:00"
+                        class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-blue-500 focus:outline-none">
+                </div>
                 @endif
 
             </div>
@@ -361,8 +414,8 @@
                 <button type="button" onclick="document.getElementById('modal-nueva-escaleta').classList.add('hidden')"
                     class="px-4 py-2 text-sm text-gray-400 hover:text-white transition">Cancelar</button>
                 <button type="submit"
-                    class="{{ $show->isReality() ? 'bg-pink-600 hover:bg-pink-500' : 'bg-blue-600 hover:bg-blue-500' }} px-5 py-2 rounded text-sm font-bold uppercase transition">
-                    {{ $show->isReality() ? '🎬 Crear Episodio' : 'Crear Escaleta' }}
+                    class="{{ $show->hasEpisode() ? 'bg-pink-600 hover:bg-pink-500' : 'bg-blue-600 hover:bg-blue-500' }} px-5 py-2 rounded text-sm font-bold uppercase transition">
+                    {{ $show->hasEpisode() ? '🎬 Crear Episodio' : 'Crear Escaleta' }}
                 </button>
             </div>
         </form>
@@ -373,27 +426,14 @@
 <div id="modal-editar-escaleta" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50">
     <div class="bg-gray-800 rounded-xl border border-gray-700 w-full max-w-md p-6 shadow-2xl">
         <h2 class="text-lg font-bold text-white mb-1">
-            {{ $show->isReality() ? '✏️ Editar Episodio' : '✏️ Editar Fecha y Hora' }}
+            {{ $show->hasEpisode() ? '✏️ Editar Episodio' : '✏️ Editar Fecha y Hora' }}
         </h2>
         <p class="text-gray-500 text-sm mb-5">{{ $show->title }}</p>
         <form method="POST" id="form-editar-escaleta" action="">
             @csrf
             <div class="flex flex-col gap-4">
-                <div>
-                    <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">
-                        {{ $show->isReality() ? 'Fecha de Grabación *' : 'Fecha de Emisión *' }}
-                    </label>
-                    <input type="date" name="air_date" id="edit-air-date" required
-                        class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-blue-500 focus:outline-none">
-                </div>
-                @if($show->isLive())
-                <div>
-                    <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">Hora de Inicio *</label>
-                    <input type="time" name="air_time" id="edit-air-time" required
-                        class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-blue-500 focus:outline-none">
-                </div>
-                @endif
-                @if($show->isReality())
+
+                @if($show->hasEpisode())
                 <div class="grid grid-cols-3 gap-3">
                     <div>
                         <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">Episodio #</label>
@@ -406,7 +446,43 @@
                             class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-pink-500 focus:outline-none">
                     </div>
                 </div>
+
+                <div>
+                    <label class="text-xs uppercase text-amber-400 font-bold tracking-widest block mb-1">
+                        📅 Fecha de Entrega
+                    </label>
+                    <input type="date" name="delivery_date" id="edit-delivery-date"
+                        class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-amber-500 focus:outline-none">
+                </div>
+                @else
+                <div>
+                    <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">
+                        Edición o Tema Central (Opcional)
+                    </label>
+                    <input type="text" name="episode_name" id="edit-episode-name" placeholder="Ej: Edición Mediodía..."
+                        class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-blue-500 focus:outline-none">
+                    <span class="text-[10px] text-gray-500 mt-0.5 block">
+                        Opcional. Si lo dejas en blanco, se titulará automáticamente con la fecha.
+                    </span>
+                </div>
                 @endif
+
+                <div>
+                    <label class="text-xs uppercase text-blue-400 font-bold tracking-widest block mb-1">
+                        📡 Fecha de Aire *
+                    </label>
+                    <input type="date" name="air_date" id="edit-air-date" required
+                        class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-blue-500 focus:outline-none">
+                </div>
+
+                @if($show->hasAirTime())
+                <div>
+                    <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">Hora de Inicio *</label>
+                    <input type="time" name="air_time" id="edit-air-time" required
+                        class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-blue-500 focus:outline-none">
+                </div>
+                @endif
+
             </div>
             <div class="flex justify-end gap-3 mt-6">
                 <button type="button" onclick="document.getElementById('modal-editar-escaleta').classList.add('hidden')"
@@ -424,27 +500,14 @@
 <div id="modal-duplicar" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50">
     <div class="bg-gray-800 rounded-xl border border-gray-700 w-full max-w-md p-6 shadow-2xl">
         <h2 class="text-lg font-bold text-white mb-1">
-            {{ $show->isReality() ? '📋 Duplicar Episodio' : '📋 Duplicar Escaleta' }}
+            {{ $show->hasEpisode() ? '📋 Duplicar Episodio' : '📋 Duplicar Escaleta' }}
         </h2>
         <p class="text-gray-500 text-sm mb-5">Se copiarán todos los bloques e ítems. El guion literario no se copia.</p>
         <form method="POST" id="form-duplicar" action="">
             @csrf
             <div class="flex flex-col gap-4">
-                <div>
-                    <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">
-                        {{ $show->isReality() ? 'Nueva Fecha de Grabación *' : 'Nueva Fecha de Emisión *' }}
-                    </label>
-                    <input type="date" name="air_date" id="dup-air-date" required value="{{ date('Y-m-d') }}"
-                        class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-blue-500 focus:outline-none">
-                </div>
-                @if($show->isLive())
-                <div>
-                    <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">Hora de Inicio *</label>
-                    <input type="time" name="air_time" id="dup-air-time" required value="19:00"
-                        class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-blue-500 focus:outline-none">
-                </div>
-                @endif
-                @if($show->isReality())
+
+                @if($show->hasEpisode())
                 <div class="grid grid-cols-3 gap-3">
                     <div>
                         <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">Episodio #</label>
@@ -457,7 +520,40 @@
                             class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-pink-500 focus:outline-none">
                     </div>
                 </div>
+
+                <div>
+                    <label class="text-xs uppercase text-amber-400 font-bold tracking-widest block mb-1">
+                        📅 Nueva Fecha de Entrega
+                    </label>
+                    <input type="date" name="delivery_date" id="dup-delivery-date"
+                        class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-amber-500 focus:outline-none">
+                </div>
+                @else
+                <div>
+                    <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">
+                        Edición o Tema Central (Opcional)
+                    </label>
+                    <input type="text" name="episode_name" id="dup-episode-name" placeholder="Ej: Edición Mediodía..."
+                        class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-blue-500 focus:outline-none">
+                </div>
                 @endif
+
+                <div>
+                    <label class="text-xs uppercase text-blue-400 font-bold tracking-widest block mb-1">
+                        📡 Nueva Fecha de Aire *
+                    </label>
+                    <input type="date" name="air_date" id="dup-air-date" required value="{{ date('Y-m-d') }}"
+                        class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-blue-500 focus:outline-none">
+                </div>
+
+                @if($show->hasAirTime())
+                <div>
+                    <label class="text-xs uppercase text-gray-400 font-bold tracking-widest block mb-1">Hora de Inicio *</label>
+                    <input type="time" name="air_time" id="dup-air-time" required value="19:00"
+                        class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-blue-500 focus:outline-none">
+                </div>
+                @endif
+
             </div>
             <div class="flex justify-end gap-3 mt-6">
                 <button type="button" onclick="document.getElementById('modal-duplicar').classList.add('hidden')"
@@ -472,9 +568,11 @@
 </div>
 
 <script>
-    function abrirEditar(rundownId, airDate, airTime, episodeNumber, episodeName) {
+    function abrirEditar(rundownId, airDate, airTime, episodeNumber, episodeName, deliveryDate) {
         document.getElementById('form-editar-escaleta').action = '/rundown/' + rundownId + '/update-datetime';
         document.getElementById('edit-air-date').value = airDate;
+        const editDelivery = document.getElementById('edit-delivery-date');
+        if (editDelivery) editDelivery.value = deliveryDate || '';
         const editTime = document.getElementById('edit-air-time');
         if (editTime) editTime.value = airTime;
         const editEpNum = document.getElementById('edit-episode-number');
@@ -484,11 +582,27 @@
         document.getElementById('modal-editar-escaleta').classList.remove('hidden');
     }
 
-    function abrirDuplicar(rundownId, airDate) {
+    function abrirDuplicar(rundownId, airDate, deliveryDate, episodeNumber, episodeName) {
         document.getElementById('form-duplicar').action = '/rundown/' + rundownId + '/duplicate';
         const fecha = new Date(airDate);
         fecha.setDate(fecha.getDate() + 7);
         document.getElementById('dup-air-date').value = fecha.toISOString().split('T')[0];
+
+        const dupDelivery = document.getElementById('dup-delivery-date');
+        if (dupDelivery) {
+            if (deliveryDate) {
+                const fEntrega = new Date(deliveryDate);
+                fEntrega.setDate(fEntrega.getDate() + 7);
+                dupDelivery.value = fEntrega.toISOString().split('T')[0];
+            } else {
+                dupDelivery.value = '';
+            }
+        }
+        const dupEpNum = document.getElementById('dup-episode-number');
+        if (dupEpNum) dupEpNum.value = episodeNumber || '';
+        const dupEpName = document.getElementById('dup-episode-name');
+        if (dupEpName) dupEpName.value = episodeName ? (episodeName + ' (copia)') : '';
+
         document.getElementById('modal-duplicar').classList.remove('hidden');
     }
 

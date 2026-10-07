@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <title>{{ $rundown->show->title }} — @if($rundown->show->hasEpisode() && $rundown->episode_number)EP {{ $rundown->episode_number }}: @endif{{ $rundown->getEditionTitle() }} — Escaleta</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -76,8 +77,19 @@
             margin-bottom: 3px; text-align: right;
         }
         .enc-fecha {
-            font-size: 12pt; font-weight: bold;
-            color: #334155; text-align: right;
+            font-size: 11pt; font-weight: bold;
+            color: #1e3a5f; text-align: right;
+        }
+        .enc-episodio {
+            font-size: 10pt; font-weight: bold; color: #0284c7;
+            text-transform: uppercase; letter-spacing: 1px; margin-top: 3px;
+        }
+        .enc-ep-badge {
+            background-color: #e0f2fe; color: #0369a1;
+            padding: 1px 5px; border-radius: 3px; font-size: 8pt; font-family: 'DejaVu Sans Mono', monospace;
+        }
+        .enc-meta-fecha {
+            font-size: 8pt; color: #475569; text-align: right; margin-top: 2px;
         }
 
         .enc-datos {
@@ -196,12 +208,16 @@
     $totalSeg     = $totalSeconds % 60;
     $horaFin      = $acumulado + $totalSeconds;
 
-    function escFmtDur($s) {
-        return sprintf('%02d:%02d', floor($s / 60), $s % 60);
+    if (!function_exists('escFmtDur')) {
+        function escFmtDur($s) {
+            return sprintf('%02d:%02d', floor($s / 60), $s % 60);
+        }
     }
-    function escFmtHora($s) {
-        $s = $s % 86400;
-        return sprintf('%02d:%02d:%02d', floor($s / 3600), floor(($s % 3600) / 60), $s % 60);
+    if (!function_exists('escFmtHora')) {
+        function escFmtHora($s) {
+            $s = $s % 86400;
+            return sprintf('%02d:%02d:%02d', floor($s / 3600), floor(($s % 3600) / 60), $s % 60);
+        }
     }
 
     $productionType = $rundown->show->production_type ?? 'live';
@@ -214,15 +230,33 @@
 {{-- HEADER FIJO --}}
 <div class="page-header">
     <table><tr>
-        <td style="width:60%">
-            <div class="hdr-show">{{ $rundown->show->title }}</div>
+        <td style="width:65%">
+            <div class="hdr-show">
+                {{ $rundown->show->title }}
+                @if($rundown->show->hasEpisode())
+                    @if($rundown->episode_number || $rundown->episode_name)
+                        <span style="color:#0284c7; font-size:8pt; font-weight:normal; text-transform:none;">
+                            — @if($rundown->episode_number)<strong>EP {{ $rundown->episode_number }}</strong>@endif @if($rundown->episode_number && $rundown->episode_name): @endif{{ $rundown->episode_name }}
+                        </span>
+                    @endif
+                @else
+                    <span style="color:#dc2626; font-size:8pt; font-weight:normal; text-transform:none;">
+                        — <strong>[EN VIVO]</strong> {{ $rundown->getEditionTitle() }}
+                    </span>
+                @endif
+            </div>
             <div class="hdr-meta">
-                Emisión: {{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}
-                &nbsp;|&nbsp; Inicio: {{ escFmtHora($acumulado) }}
-                &nbsp;|&nbsp; Fin est.: {{ escFmtHora($horaFin) }}
+                Aire: {{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}
+                @if($rundown->delivery_date)
+                    &nbsp;|&nbsp; <span style="color:#b45309;">Entrega: {{ \Carbon\Carbon::parse($rundown->delivery_date)->format('d/m/Y') }}</span>
+                @endif
+                @if($rundown->show->hasAirTime())
+                    &nbsp;|&nbsp; Inicio: {{ escFmtHora($acumulado) }}
+                    &nbsp;|&nbsp; Fin est.: {{ escFmtHora($horaFin) }}
+                @endif
             </div>
         </td>
-        <td style="width:40%">
+        <td style="width:35%">
             <div class="hdr-label">Escaleta de Producción</div>
             <div class="hdr-sub">Duración total: {{ $totalMin }}m {{ $totalSeg }}s</div>
         </td>
@@ -232,7 +266,20 @@
 {{-- FOOTER FIJO --}}
 <div class="page-footer">
     <table><tr>
-        <td>{{ strtoupper($rundown->show->title) }} &nbsp;·&nbsp; {{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}</td>
+        <td>
+            {{ strtoupper($rundown->show->title) }}
+            @if($rundown->show->hasEpisode())
+                @if($rundown->episode_number || $rundown->episode_name)
+                    &nbsp;·&nbsp; @if($rundown->episode_number)EP {{ $rundown->episode_number }}@endif @if($rundown->episode_number && $rundown->episode_name): @endif{{ $rundown->episode_name }}
+                @endif
+            @else
+                &nbsp;·&nbsp; EN VIVO: {{ $rundown->getEditionTitle() }}
+            @endif
+            &nbsp;·&nbsp; Aire: {{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}
+            @if($rundown->delivery_date)
+                &nbsp;·&nbsp; Entrega: {{ \Carbon\Carbon::parse($rundown->delivery_date)->format('d/m/Y') }}
+            @endif
+        </td>
         <td class="ft-right">USO INTERNO — PRODUCCIÓN</td>
     </tr></table>
 </div>
@@ -240,20 +287,57 @@
 {{-- ENCABEZADO PRIMERA PÁGINA --}}
 <div class="enc-top">
     <table><tr>
-        <td style="width:65%">
+        <td style="width:62%">
             <div class="enc-show">{{ $rundown->show->title }}</div>
+            @if($rundown->show->hasEpisode())
+                @if($rundown->episode_number || $rundown->episode_name)
+                    <div class="enc-episodio">
+                        @if($rundown->episode_number)
+                            <span class="enc-ep-badge">EP {{ $rundown->episode_number }}</span>
+                        @endif
+                        @if($rundown->episode_name)
+                            <span>{{ $rundown->episode_name }}</span>
+                        @endif
+                    </div>
+                @endif
+            @else
+                <div class="enc-episodio" style="color:#b91c1c;">
+                    <span class="enc-ep-badge" style="background-color:#fee2e2; color:#b91c1c;">EN VIVO</span>
+                    <span style="color:#1e293b;">{{ $rundown->getEditionTitle() }}</span>
+                </div>
+            @endif
             @if($rundown->show->channel)
                 <div class="enc-canal">{{ $rundown->show->channel }}</div>
             @endif
         </td>
-        <td style="width:35%">
+        <td style="width:38%; text-align:right;">
             <div class="enc-doc-label">Escaleta de Producción</div>
-            <div class="enc-fecha">{{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}</div>
+            <div class="enc-meta-fecha">
+                <span style="color:#64748b; font-size:7pt; text-transform:uppercase;">Fecha de Aire:</span>
+                <span class="enc-fecha" style="font-size:10pt;">{{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}</span>
+            </div>
+            @if($rundown->delivery_date)
+            <div class="enc-meta-fecha" style="margin-top:2px;">
+                <span style="color:#92400e; font-size:7pt; text-transform:uppercase;">Fecha de Entrega:</span>
+                <span style="font-size:10pt; font-weight:bold; color:#b45309;">{{ \Carbon\Carbon::parse($rundown->delivery_date)->format('d/m/Y') }}</span>
+            </div>
+            @endif
         </td>
     </tr></table>
 </div>
 <div class="enc-datos">
     <table><tr>
+        <td>
+            <div class="dato-lbl">Fecha de Aire</div>
+            <div class="dato-val">{{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}</div>
+        </td>
+        @if($rundown->delivery_date)
+        <td>
+            <div class="dato-lbl" style="color:#b45309;">Fecha Entrega</div>
+            <div class="dato-val" style="color:#b45309;">{{ \Carbon\Carbon::parse($rundown->delivery_date)->format('d/m/Y') }}</div>
+        </td>
+        @endif
+        @if($rundown->show->hasAirTime())
         <td>
             <div class="dato-lbl">Hora de Inicio</div>
             <div class="dato-val">{{ escFmtHora($acumulado) }}</div>
@@ -262,6 +346,7 @@
             <div class="dato-lbl">Fin Estimado</div>
             <div class="dato-val">{{ escFmtHora($horaFin) }}</div>
         </td>
+        @endif
         <td>
             <div class="dato-lbl">Duración Total</div>
             <div class="dato-val">{{ $totalMin }}m {{ $totalSeg }}s</div>

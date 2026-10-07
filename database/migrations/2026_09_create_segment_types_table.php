@@ -9,6 +9,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasTable('segment_types')) {
+            return;
+        }
+
         Schema::create('segment_types', function (Blueprint $table) {
             $table->id();
             $table->string('production_type');

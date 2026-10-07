@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rundown - {{ $rundown->show->title }}</title>
+    <title>{{ $rundown->show->title }} — @if($rundown->show->hasEpisode() && $rundown->episode_number)EP {{ $rundown->episode_number }}: @endif{{ $rundown->getEditionTitle() }} | RONUP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -31,17 +31,19 @@
 
 <div class="p-6">
 @php
+    $locked = $rundown->isLocked();
     $tz = 'America/Tegucigalpa';
-    // Parsear fecha/hora de la escaleta EN timezone local
+    $airTimeStr = ($rundown->air_time && $rundown->air_time !== '00:00:00')
+        ? $rundown->air_time
+        : ($rundown->show->hasAirTime() ? ($rundown->air_time ?? '00:00:00') : '23:59:59');
+    $airDateStr = $rundown->air_date instanceof \Carbon\Carbon
+        ? $rundown->air_date->format('Y-m-d')
+        : substr((string)$rundown->air_date, 0, 10);
     $airDateTime = \Carbon\Carbon::createFromFormat(
         'Y-m-d H:i:s',
-        $rundown->air_date . ' ' . ($rundown->air_time ?? '00:00:00'),
+        $airDateStr . ' ' . $airTimeStr,
         $tz
     );
-    // "now" también en Tegucigalpa para comparar manzanas con manzanas
-    $nowLocal = \Carbon\Carbon::now($tz);
-    // Bloqueado cuando ya pasó 1 hora desde la hora de emisión
-    $locked = $nowLocal->greaterThan($airDateTime->copy()->addHour());
 @endphp
 
 <div class="max-w-7xl mx-auto">
@@ -67,27 +69,77 @@
     @endif
 
     {{-- HEADER --}}
-    <header class="flex justify-between items-center mb-8 border-b border-gray-700 pb-4 {{ $locked ? 'opacity-60' : '' }}">
+    <header class="flex justify-between items-center mb-8 border-b border-gray-700 pb-5 {{ $locked ? 'opacity-60' : '' }}">
         <div>
-            <div class="flex items-center gap-4 mb-1">
-                <h1 class="text-3xl font-bold {{ $locked ? 'text-gray-500' : 'text-blue-400' }}">
+            <div class="flex items-center gap-3 mb-2 flex-wrap">
+                <h1 class="text-3xl font-black tracking-tight {{ $locked ? 'text-gray-500' : 'text-blue-400' }}">
                     {{ $rundown->show->title }}
                 </h1>
+
+                @if($rundown->show->hasEpisode())
+                    @if($rundown->episode_number || $rundown->episode_name)
+                    <span class="text-gray-600 text-2xl font-light">/</span>
+                    <div class="flex items-center gap-2 bg-pink-950/40 border border-pink-700/40 px-3 py-1 rounded-lg">
+                        @if($rundown->episode_number)
+                            <span class="font-mono text-xs font-bold uppercase bg-pink-800/60 text-pink-200 px-2 py-0.5 rounded">
+                                EP {{ $rundown->episode_number }}
+                            </span>
+                        @endif
+                        @if($rundown->episode_name)
+                            <span class="text-base font-bold text-pink-300">
+                                {{ $rundown->episode_name }}
+                            </span>
+                        @endif
+                    </div>
+                    @endif
+                @else
+                    {{-- En vivo: Mostrar badge EN VIVO + Edición/Tema (manual o automático con fecha) --}}
+                    <span class="text-gray-600 text-2xl font-light">/</span>
+                    <div class="flex items-center gap-2 bg-red-950/40 border border-red-700/40 px-3 py-1 rounded-lg">
+                        <span class="flex items-center gap-1.5 font-mono text-xs font-bold uppercase bg-red-800/60 text-red-200 px-2 py-0.5 rounded">
+                            <span class="w-2 h-2 rounded-full bg-red-400 animate-pulse"></span>
+                            EN VIVO
+                        </span>
+                        <span class="text-base font-bold text-red-200">
+                            {{ $rundown->getEditionTitle() }}
+                        </span>
+                    </div>
+                @endif
+
                 {{-- RELOJ EN TIEMPO REAL GMT-6 --}}
-                <div class="flex flex-col items-start">
+                <div class="flex flex-col items-start ml-2 pl-3 border-l border-gray-800">
                     <div id="reloj-hora"
                          class="font-mono font-bold text-2xl {{ $locked ? 'text-gray-600' : 'text-yellow-400' }} leading-none tabular-nums">
                         --:--:--
                     </div>
-                    <div class="text-[10px] text-gray-600 uppercase tracking-widest mt-0.5">
+                    <div class="text-[9px] text-gray-500 uppercase tracking-widest mt-0.5">
                         Tegucigalpa · GMT-6
                     </div>
                 </div>
             </div>
-            <p class="{{ $locked ? 'text-gray-600' : 'text-gray-400' }} text-sm">
-                Fecha: {{ $rundown->air_date }} &nbsp;·&nbsp;
-                Inicio: {{ substr($rundown->air_time ?? '00:00:00', 0, 5) }}
-            </p>
+
+            <div class="flex items-center gap-2 flex-wrap text-xs">
+                <span class="bg-gray-800 border border-gray-700 rounded px-2.5 py-1 text-gray-300 flex items-center gap-1.5">
+                    <span class="text-blue-400 font-semibold">📡 Fecha de Aire:</span>
+                    <strong class="text-white">{{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}</strong>
+                    <span class="text-gray-500 text-[11px]">({{ \Carbon\Carbon::parse($rundown->air_date)->translatedFormat('l') }})</span>
+                </span>
+
+                @if($rundown->delivery_date)
+                <span class="bg-amber-950/40 border border-amber-700/50 rounded px-2.5 py-1 text-amber-200 flex items-center gap-1.5">
+                    <span class="text-amber-400 font-semibold">📅 Fecha de Entrega:</span>
+                    <strong class="text-amber-200">{{ \Carbon\Carbon::parse($rundown->delivery_date)->format('d/m/Y') }}</strong>
+                    <span class="text-amber-400/70 text-[11px]">({{ \Carbon\Carbon::parse($rundown->delivery_date)->translatedFormat('l') }})</span>
+                </span>
+                @endif
+
+                @if($rundown->show->hasAirTime())
+                <span class="bg-gray-800 border border-gray-700 rounded px-2.5 py-1 text-gray-300 flex items-center gap-1.5">
+                    <span class="text-yellow-400 font-semibold">⏰ Hora Inicio:</span>
+                    <strong class="font-mono text-yellow-300">{{ substr($rundown->air_time ?? '00:00:00', 0, 5) }}</strong>
+                </span>
+                @endif
+            </div>
         </div>
         <div class="flex gap-2 items-center flex-wrap">
             <a href="/shows/{{ $rundown->show_id }}" class="text-gray-500 hover:text-white transition mr-2">← Volver</a>

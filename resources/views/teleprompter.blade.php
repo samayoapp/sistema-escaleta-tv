@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PROMPTER: {{ $rundown->show->title }}</title>
+    <title>PROMPTER: {{ $rundown->show->title }} — @if($rundown->show->hasEpisode() && $rundown->episode_number)EP {{ $rundown->episode_number }}: @endif{{ $rundown->getEditionTitle() }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body::-webkit-scrollbar { display: none; }
@@ -27,11 +27,30 @@
 {{-- HEADER FIJO --}}
 <div class="sticky top-0 z-50 bg-black/90 backdrop-blur border-b border-gray-800 px-16 py-4 flex justify-between items-center">
     <div>
-        <h1 class="text-2xl font-bold text-blue-400 uppercase tracking-widest">
-            {{ $rundown->show->title }}
-        </h1>
+        <div class="flex items-center gap-3">
+            <h1 class="text-2xl font-bold text-blue-400 uppercase tracking-widest">
+                {{ $rundown->show->title }}
+            </h1>
+            @if($rundown->show->hasEpisode())
+                @if($rundown->episode_number || $rundown->episode_name)
+                    <span class="text-xs font-bold uppercase bg-pink-900/60 text-pink-300 border border-pink-700/50 px-2 py-0.5 rounded">
+                        @if($rundown->episode_number)EP {{ $rundown->episode_number }}@endif
+                        @if($rundown->episode_name) · {{ $rundown->episode_name }}@endif
+                    </span>
+                @endif
+            @else
+                <span class="flex items-center gap-1.5 text-xs font-bold uppercase bg-red-900/60 text-red-200 border border-red-700/50 px-2.5 py-0.5 rounded">
+                    <span class="w-2 h-2 rounded-full bg-red-400 animate-pulse"></span>
+                    EN VIVO · {{ $rundown->getEditionTitle() }}
+                </span>
+            @endif
+        </div>
         <p class="text-gray-500 text-sm">
-            Emisión: {{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}
+            Aire: {{ \Carbon\Carbon::parse($rundown->air_date)->format('d/m/Y') }}
+            @if($rundown->delivery_date)
+                &nbsp;·&nbsp;
+                <span class="text-amber-400">Entrega: {{ \Carbon\Carbon::parse($rundown->delivery_date)->format('d/m/Y') }}</span>
+            @endif
             @if($prompterSegments->count() < $allSegments->count())
                 &nbsp;·&nbsp;
                 <span class="text-yellow-600">

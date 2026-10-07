@@ -28,13 +28,7 @@ class RundownController extends Controller
     // ─── Helper: calcular locked con timezone Tegucigalpa ────────────────────
     public function calcLocked($rundown): bool
     {
-        $tz = 'America/Tegucigalpa';
-        $airDateTime = \Carbon\Carbon::createFromFormat(
-            'Y-m-d H:i:s',
-            $rundown->air_date . ' ' . ($rundown->air_time ?? '00:00:00'),
-            $tz
-        );
-        return \Carbon\Carbon::now($tz)->greaterThan($airDateTime->copy()->addHour());
+        return $rundown->isLocked();
     }
 
     // ─── Vista principal — recibe ID del rundown ──────────────────────────────
@@ -234,7 +228,19 @@ public function editSegment($id)
         $pdf = Pdf::loadView('pdf.guion', compact('rundown'))
             ->setPaper('letter', 'portrait');
 
-        $filename = 'guion-' . str($rundown->show->title)->slug() . '-' . $rundown->air_date . '.pdf';
+        $epPart = '';
+        if ($rundown->episode_number) {
+            $epPart .= '-ep' . $rundown->episode_number;
+        }
+        if ($rundown->episode_name) {
+            $epPart .= '-' . str($rundown->episode_name)->slug();
+        }
+
+        $dateStr = $rundown->air_date instanceof \Carbon\Carbon
+            ? $rundown->air_date->format('Y-m-d')
+            : substr((string)$rundown->air_date, 0, 10);
+
+        $filename = 'guion-' . str($rundown->show->title)->slug() . $epPart . '-' . $dateStr . '.pdf';
 
         return $pdf->stream($filename);
     }
@@ -250,7 +256,19 @@ public function editSegment($id)
         $pdf = Pdf::loadView('pdf.escaleta', compact('rundown'))
             ->setPaper('letter', 'landscape');
 
-        $filename = 'escaleta-' . str($rundown->show->title)->slug() . '-' . $rundown->air_date . '.pdf';
+        $epPart = '';
+        if ($rundown->episode_number) {
+            $epPart .= '-ep' . $rundown->episode_number;
+        }
+        if ($rundown->episode_name) {
+            $epPart .= '-' . str($rundown->episode_name)->slug();
+        }
+
+        $dateStr = $rundown->air_date instanceof \Carbon\Carbon
+            ? $rundown->air_date->format('Y-m-d')
+            : substr((string)$rundown->air_date, 0, 10);
+
+        $filename = 'escaleta-' . str($rundown->show->title)->slug() . $epPart . '-' . $dateStr . '.pdf';
 
         return $pdf->stream($filename);
     }
@@ -353,8 +371,9 @@ public function editSegment($id)
                 'production_type' => $rundown->show->production_type ?? 'live',
             ],
             'rundown' => [
-                'air_date'       => $rundown->air_date,
+                'air_date'       => $rundown->air_date instanceof \Carbon\Carbon ? $rundown->air_date->format('Y-m-d') : (string)$rundown->air_date,
                 'air_time'       => $rundown->air_time,
+                'delivery_date'  => $rundown->delivery_date instanceof \Carbon\Carbon ? $rundown->delivery_date->format('Y-m-d') : ($rundown->delivery_date ? (string)$rundown->delivery_date : null),
                 'status'         => 'borrador',
                 'episode_name'   => $rundown->episode_name,
                 'episode_number' => $rundown->episode_number,
@@ -376,7 +395,7 @@ public function editSegment($id)
         ];
 
         $showSlug    = str($rundown->show->title)->slug();
-        $date        = $rundown->air_date;
+        $date        = $rundown->air_date instanceof \Carbon\Carbon ? $rundown->air_date->format('Y-m-d') : (string)$rundown->air_date;
         $episodePart = $rundown->episode_number ? '-ep' . $rundown->episode_number : '';
         $filename    = "ronup-{$showSlug}{$episodePart}-{$date}.json";
 
@@ -414,6 +433,7 @@ public function editSegment($id)
             'show_id'        => $show->id,
             'air_date'       => $rundownData['air_date'],
             'air_time'       => $rundownData['air_time'] ?? '00:00:00',
+            'delivery_date'  => $rundownData['delivery_date'] ?? null,
             'status'         => 'borrador',
             'episode_name'   => $rundownData['episode_name'] ?? null,
             'episode_number' => $rundownData['episode_number'] ?? null,

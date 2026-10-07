@@ -48,17 +48,20 @@ class ShowController extends Controller
         $show = Show::findOrFail($id);
 
         // Validación base
-        $rules = ['air_date' => 'required|date'];
+        $rules = [
+            'air_date'      => 'required|date',
+            'delivery_date' => 'nullable|date',
+        ];
 
-        // air_time solo es obligatorio en programas en vivo
-        if ($show->isLive()) {
+        // air_time solo es obligatorio si el show tiene hora de inicio
+        if ($show->hasAirTime()) {
             $rules['air_time'] = 'required';
         }
 
-        // Campos de episodio para reality
-        if ($show->isReality()) {
+        // Campos de episodio / edición
+        $rules['episode_name'] = 'nullable|string|max:255';
+        if ($show->hasEpisode()) {
             $rules['episode_number'] = 'nullable|integer|min:1';
-            $rules['episode_name']   = 'nullable|string|max:255';
         }
 
         $request->validate($rules);
@@ -66,10 +69,11 @@ class ShowController extends Controller
         $rundown = Rundown::create([
             'show_id'        => $id,
             'air_date'       => $request->air_date,
-            'air_time'       => $show->isLive() ? $request->air_time : '00:00:00',
+            'air_time'       => $show->hasAirTime() ? $request->air_time : '00:00:00',
+            'delivery_date'  => $request->delivery_date,
             'status'         => 'borrador',
             'episode_name'   => $request->episode_name,
-            'episode_number' => $request->episode_number,
+            'episode_number' => $show->hasEpisode() ? $request->episode_number : null,
         ]);
 
         return redirect('/rundown/' . $rundown->id);
@@ -77,7 +81,11 @@ class ShowController extends Controller
 
     public function duplicateRundown(Request $request, $id)
     {
-        $rules = ['air_date' => 'required|date'];
+        $rules = [
+            'air_date'      => 'required|date',
+            'delivery_date' => 'nullable|date',
+            'episode_name'  => 'nullable|string|max:255',
+        ];
 
         $original = Rundown::with([
             'show',
@@ -85,8 +93,12 @@ class ShowController extends Controller
             'blocks.segments' => fn($q) => $q->orderBy('order_index'),
         ])->findOrFail($id);
 
-        if ($original->show->isLive()) {
+        if ($original->show->hasAirTime()) {
             $rules['air_time'] = 'required';
+        }
+
+        if ($original->show->hasEpisode()) {
+            $rules['episode_number'] = 'nullable|integer|min:1';
         }
 
         $request->validate($rules);
@@ -94,10 +106,11 @@ class ShowController extends Controller
         $nuevo = Rundown::create([
             'show_id'        => $original->show_id,
             'air_date'       => $request->air_date,
-            'air_time'       => $original->show->isLive() ? $request->air_time : '00:00:00',
+            'air_time'       => $original->show->hasAirTime() ? $request->air_time : '00:00:00',
+            'delivery_date'  => $request->delivery_date ?? $original->delivery_date,
             'status'         => 'borrador',
             'episode_name'   => $request->episode_name ?? $original->episode_name,
-            'episode_number' => $request->episode_number ?? null,
+            'episode_number' => $original->show->hasEpisode() ? ($request->episode_number ?? null) : null,
         ]);
 
         foreach ($original->blocks as $block) {
@@ -126,17 +139,26 @@ class ShowController extends Controller
     {
         $rundown = Rundown::with('show')->findOrFail($id);
 
-        $rules = ['air_date' => 'required|date'];
-        if ($rundown->show->isLive()) {
+        $rules = [
+            'air_date'      => 'required|date',
+            'delivery_date' => 'nullable|date',
+            'episode_name'  => 'nullable|string|max:255',
+        ];
+        if ($rundown->show->hasAirTime()) {
             $rules['air_time'] = 'required';
+        }
+
+        if ($rundown->show->hasEpisode()) {
+            $rules['episode_number'] = 'nullable|integer|min:1';
         }
 
         $request->validate($rules);
 
         $rundown->air_date       = $request->air_date;
-        $rundown->air_time       = $rundown->show->isLive() ? $request->air_time : '00:00:00';
+        $rundown->air_time       = $rundown->show->hasAirTime() ? $request->air_time : '00:00:00';
+        $rundown->delivery_date  = $request->delivery_date;
         $rundown->episode_name   = $request->episode_name;
-        $rundown->episode_number = $request->episode_number;
+        $rundown->episode_number = $rundown->show->hasEpisode() ? $request->episode_number : null;
         $rundown->save();
 
         return redirect('/shows/' . $rundown->show_id);

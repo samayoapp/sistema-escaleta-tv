@@ -2,12 +2,16 @@
     $airTimeParts = explode(':', $rundown->air_time ?? '19:00:00');
     $acumulado = ((int)$airTimeParts[0] * 3600) + ((int)$airTimeParts[1] * 60) + ((int)($airTimeParts[2] ?? 0));
 
-    function fmtDuration($s) {
-        return sprintf('%02d:%02d', floor($s / 60), $s % 60);
+    if (!function_exists('fmtDuration')) {
+        function fmtDuration($s) {
+            return sprintf('%02d:%02d', floor($s / 60), $s % 60);
+        }
     }
-    function fmtHora($s) {
-        $s = $s % 86400;
-        return sprintf('%02d:%02d:%02d', floor($s / 3600), floor(($s % 3600) / 60), $s % 60);
+    if (!function_exists('fmtHora')) {
+        function fmtHora($s) {
+            $s = $s % 86400;
+            return sprintf('%02d:%02d:%02d', floor($s / 3600), floor(($s % 3600) / 60), $s % 60);
+        }
     }
 @endphp
 
